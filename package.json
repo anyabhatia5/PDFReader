@@ -1,7 +1,7 @@
 {
   "name": "pdfreader",
   "version": "0.1.0",
-  "description": "Upload lab-report PDFs, extract their parameters into PostgreSQL and view them in a table.",
+  "description": "Upload lab or industrial report PDFs, extract their parameters into PostgreSQL and view them in a table.",
   "private": true,
   "license": "UNLICENSED",
   "engines": {
@@ -14,9 +14,12 @@
     "migrate": "npm --prefix backend run migration:run",
     "dev": "concurrently --names api,web --prefix-colors blue,magenta \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
     "test": "npm --prefix backend test",
-    "test:e2e": "npm --prefix backend run test:e2e"
+    "test:e2e": "npm --prefix backend run test:e2e",
+    "format": "prettier --write \"backend/{src,test,scripts}/**/*.{ts,mjs}\" \"backend/*.ts\" \"frontend/src/**/*.{ts,tsx}\" \"frontend/*.{ts,mjs}\" \"scripts/*.mjs\"",
+    "format:check": "prettier --check \"backend/{src,test,scripts}/**/*.{ts,mjs}\" \"backend/*.ts\" \"frontend/src/**/*.{ts,tsx}\" \"frontend/*.{ts,mjs}\" \"scripts/*.mjs\""
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prettier": "^3.10.1"
   }
 }
