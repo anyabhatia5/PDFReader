@@ -12,6 +12,22 @@ describe('buildLines', () => {
     expect(lines).toHaveLength(1);
   });
 
+  it('does not let a tiny glyph (an OCR "-" is ~1pt tall) split the line', () => {
+    // Real OCR output from a scanned report, simplified.
+    const dash = { text: '-', x: 439, y: 232.5, width: 4, height: 1 };
+    const lines = buildLines(
+      page(1, [
+        { ...word('Packed Cell Volume', 50, 231.5), height: 7 },
+        { ...word('(PCV)', 141, 232.7), height: 9.3 },
+        { ...word('36', 425, 231.5), height: 7 },
+        dash,
+        { ...word('46', 445, 231.5), height: 7 },
+      ]),
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0].text).toBe('Packed Cell Volume (PCV) 36 - 46');
+  });
+
   it('splits a line into cells at large gaps and joins words at small gaps', () => {
     // "Total" ends at x=75; "Cholesterol" starts 3pt later (a word space).
     const [line] = buildLines(

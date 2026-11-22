@@ -51,7 +51,9 @@ export function buildLines(page: PageText): TextLine[] {
   for (const piece of pieces) {
     const current = groups.at(-1);
     const anchor = current?.[0];
-    const height = Math.min(piece.height || DEFAULT_HEIGHT, anchor?.height || DEFAULT_HEIGHT);
+    // Use the TALLER of the two: OCR reports tiny boxes for glyphs such as
+    // "-" or ".", which must not shrink the tolerance and split the line.
+    const height = Math.max(piece.height || DEFAULT_HEIGHT, anchor?.height || DEFAULT_HEIGHT);
 
     if (anchor && Math.abs(piece.y - anchor.y) <= height * SAME_LINE_TOLERANCE) {
       current.push(piece);

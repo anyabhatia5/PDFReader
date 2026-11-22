@@ -18,10 +18,12 @@ const EMPTY_MARKERS = new Set(['', '-', '--', '—', '–']);
 const NUMERIC_VALUE = new RegExp(String.raw`^(<=|>=|≤|≥|<|>)?\s*(${NUMBER})$`);
 
 /**
- * A high/low flag some labs print next to the value: "18.4 H", "3.1 (L)",
- * "250 HIGH", "18.4*". Removed only to read the number; raw text is kept.
+ * A high/low flag some labs print after the value: "18.4 H", "3.1 (L)",
+ * "250 HIGH", "18.4*", or "11.2L" when OCR drops the space. Only stripped
+ * when it directly follows a digit, and only to read the number; the raw
+ * text is kept.
  */
-const TRAILING_FLAG = /\s*(?:\(?\b(?:H|L|HIGH|LOW)\b\)?|\*)$/i;
+const TRAILING_FLAG = /(?<=\d)\s*(?:\((?:H|L)\)|HIGH|LOW|H|L|\*)$/i;
 
 /**
  * "13 - 17", "13–17", "13 to 17", optionally followed by a unit. Also

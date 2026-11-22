@@ -17,6 +17,9 @@ describe('parseValue', () => {
     expect(parseValue('18.4 H')).toEqual({ raw: '18.4 H', numeric: 18.4, comparator: null });
     expect(parseValue('3.1 (L)')).toEqual({ raw: '3.1 (L)', numeric: 3.1, comparator: null });
     expect(parseValue('250*')).toEqual({ raw: '250*', numeric: 250, comparator: null });
+    expect(parseValue('250 HIGH')).toEqual({ raw: '250 HIGH', numeric: 250, comparator: null });
+    // OCR often drops the space before the flag.
+    expect(parseValue('11.2L')).toEqual({ raw: '11.2L', numeric: 11.2, comparator: null });
   });
 
   it.each(['Positive', 'Nil', 'Negative', 'Reactive', 'Pale Yellow', 'High'])(
