@@ -1,12 +1,16 @@
 import type { DataSourceOptions } from 'typeorm';
+import { ParameterDefinition } from '../catalog/parameter-definition.entity.js';
 import type { DatabaseConfig } from '../config/app-config.js';
+import { InitialSchema1795331643353 } from './migrations/1795331643353-InitialSchema.js';
+import { ReportParameter } from '../reports/entities/report-parameter.entity.js';
+import { Report } from '../reports/entities/report.entity.js';
 
 /**
  * Entities and migrations are listed explicitly (instead of file globs) so the
  * same options work from TypeScript sources, compiled output and tests.
  */
-const ENTITIES: DataSourceOptions['entities'] = [];
-const MIGRATIONS: DataSourceOptions['migrations'] = [];
+const ENTITIES: DataSourceOptions['entities'] = [Report, ReportParameter, ParameterDefinition];
+const MIGRATIONS: DataSourceOptions['migrations'] = [InitialSchema1795331643353];
 
 /**
  * TypeORM options shared by the running app and the migration CLI.
@@ -25,5 +29,7 @@ export function buildTypeOrmOptions(db: DatabaseConfig): DataSourceOptions {
     entities: ENTITIES,
     migrations: MIGRATIONS,
     synchronize: false,
+    // Use gen_random_uuid(), built into Postgres 13+, so no extension is needed.
+    uuidExtension: 'pgcrypto',
   };
 }
