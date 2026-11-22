@@ -103,6 +103,73 @@ describe('parseParameterTable', () => {
     expect(rows).toEqual([]);
   });
 
+  describe('industrial / SCADA layouts', () => {
+    it('joins Tag + Description into the name and combines Lo/Hi limit columns', () => {
+      const header = row(100, [
+        ['Tag', 45],
+        ['Description', 100],
+        ['Value', 250],
+        ['Unit', 315],
+        ['Lo Limit', 375],
+        ['Hi Limit', 430],
+        ['Status', 485],
+      ]);
+      const { rows } = parse(
+        page(1, [
+          ...header,
+          ...row(120, [['FT-101', 45], ['Inlet Flow', 100], ['182.4', 250], ['m³/h', 315], ['120', 375], ['250', 430], ['NORMAL', 485]]),
+          ...row(140, [['AT-102', 45], ['Turbidity', 100], ['14.6', 250], ['NTU', 315], ['10', 430], ['HI ALARM', 485]]),
+          ...row(160, [['EM-402', 45], ['Power Factor', 100], ['0.93', 250], ['0.90', 375], ['NORMAL', 485]]),
+          ...row(180, [['EM-401', 45], ['Energy', 100], ['2,184.5', 250], ['kWh', 315], ['---', 375], ['---', 430]]),
+        ]),
+      );
+
+      expect(rows).toEqual([
+        { pageNumber: 1, name: 'FT-101 Inlet Flow', value: '182.4', unit: 'm³/h', range: '120 - 250' },
+        { pageNumber: 1, name: 'AT-102 Turbidity', value: '14.6', unit: 'NTU', range: '<= 10' },
+        { pageNumber: 1, name: 'EM-402 Power Factor', value: '0.93', unit: null, range: '>= 0.90' },
+        { pageNumber: 1, name: 'EM-401 Energy', value: '2,184.5', unit: 'kWh', range: null },
+      ]);
+    });
+
+    it('takes the unit from the result column title and ignores applied / error / pass-fail columns', () => {
+      const { rows } = parse(
+        page(1, [
+          ...row(100, [
+            ['Test Point', 45],
+            ['Applied (bar)', 160],
+            ['Reading (bar)', 245],
+            ['Error (bar)', 330],
+            ['Tolerance (bar)', 410],
+            ['Result', 495],
+          ]),
+          ...row(120, [['Point 3 (50 %)', 45], ['5.000', 160], ['5.031', 245], ['+0.031', 330], ['± 0.025', 410], ['Fail', 495]]),
+        ]),
+      );
+      expect(rows).toEqual([{ pageNumber: 1, name: 'Point 3 (50 %)', value: '5.031', unit: 'bar', range: '± 0.025' }]);
+    });
+
+    it('ignores serial-number and test-method columns', () => {
+      const { rows } = parse(
+        page(1, [
+          ...row(100, [['S.No', 45], ['Parameter', 75], ['Result', 215], ['Unit', 290], ['Permissible Limit', 360], ['Test Method', 455]]),
+          ...row(120, [['1', 45], ['Turbidity', 75], ['0.8', 215], ['NTU', 290], ['Max 1', 360], ['IS 3025 (Part 10)', 455]]),
+        ]),
+      );
+      expect(rows).toEqual([{ pageNumber: 1, name: 'Turbidity', value: '0.8', unit: 'NTU', range: 'Max 1' }]);
+    });
+
+    it('keeps "Normal Range (Min - Max)" as a single range column', () => {
+      const { rows } = parse(
+        page(1, [
+          ...row(100, [['Parameter', 50], ['Reading', 250], ['Normal Range (Min - Max)', 350]]),
+          ...row(120, [['Oil Temperature', 50], ['62', 250], ['40 - 85', 350]]),
+        ]),
+      );
+      expect(rows).toEqual([{ pageNumber: 1, name: 'Oil Temperature', value: '62', unit: null, range: '40 - 85' }]);
+    });
+  });
+
   it('recognises alternative header wording and ignores unknown columns', () => {
     const { rows } = parse(
       page(1, [

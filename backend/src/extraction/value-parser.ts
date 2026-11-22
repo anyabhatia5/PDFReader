@@ -8,11 +8,14 @@
 import type { ValueComparator } from '../reports/entities/report-parameter.entity.js';
 import type { ParsedValue, ReferenceRange } from './extraction.types.js';
 
-/** A number with optional sign, thousands commas and decimals: "-1,234.5". */
-const NUMBER = String.raw`[-+]?\d[\d,]*(?:\.\d+)?`;
+/**
+ * A number with optional sign, thousands commas, decimals and exponent:
+ * "-1,234.5", "2.5E3".
+ */
+const NUMBER = String.raw`[-+]?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?`;
 
 /** Cells that mean "no value printed". */
-const EMPTY_MARKERS = new Set(['', '-', '--', '—', '–']);
+const EMPTY_MARKERS = new Set(['', '-', '--', '---', '—', '–']);
 
 /** "13.2", "<5", "≥ 40", "1,50,000" — a whole cell that is one bounded number. */
 const NUMERIC_VALUE = new RegExp(String.raw`^(<=|>=|≤|≥|<|>)?\s*(${NUMBER})$`);
@@ -35,15 +38,15 @@ const RANGE_BETWEEN = new RegExp(
   'i',
 );
 
-/** "< 200", "<= 5", "Up to 5", "Below 10". */
+/** "< 200", "<= 5", "Up to 5", "Below 10", "Max 20", "NMT 0.5" (not more than). */
 const RANGE_UPPER = new RegExp(
-  String.raw`^(?:<=|≤|<|up\s*to|upto|below|less\s+than)\s*(${NUMBER})(?:\s+\S.*)?$`,
+  String.raw`^(?:<=|≤|<|up\s*to|upto|below|less\s+than|max(?:imum)?\.?|not\s+more\s+than|nmt)\s*(${NUMBER})(?:\s+\S.*)?$`,
   'i',
 );
 
-/** "> 40", ">= 60", "Above 40". */
+/** "> 40", ">= 60", "Above 40", "Min 50", "NLT 30" (not less than). */
 const RANGE_LOWER = new RegExp(
-  String.raw`^(?:>=|≥|>|above|more\s+than|greater\s+than)\s*(${NUMBER})(?:\s+\S.*)?$`,
+  String.raw`^(?:>=|≥|>|above|more\s+than|greater\s+than|min(?:imum)?\.?|not\s+less\s+than|nlt)\s*(${NUMBER})(?:\s+\S.*)?$`,
   'i',
 );
 

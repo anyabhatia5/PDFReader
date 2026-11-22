@@ -145,6 +145,65 @@ describe('Reports API (e2e)', () => {
       expect(report.parameters.map((p) => p.name)).toContain('Mean Corpuscular Volume (MCV)');
     });
 
+    describe('industrial / SCADA reports', () => {
+      it('reads a SCADA daily report: tag + description, Lo/Hi limits, alarms, 2 pages', async () => {
+        const { report } = (await upload('09-scada-daily-process-report.pdf')).body as UploadResponseDto;
+        const byName = new Map(report.parameters.map((p) => [p.name, p]));
+
+        expect(report).toMatchObject({ reportIdentifier: 'SCADA-DR-20261121-PS04', pageCount: 2, parameterCount: 17 });
+        expect(byName.get('FT-101 Raw Water Inlet Flow')).toMatchObject({
+          value: { numeric: 182.4 },
+          unit: 'm³/h',
+          referenceRange: { raw: '120 - 250', low: 120, high: 250 },
+          isAbnormal: false,
+        });
+        // The values the SCADA system itself flagged as alarms.
+        expect(byName.get('AT-102 Raw Water Turbidity')?.isAbnormal).toBe(true);
+        expect(byName.get('VT-204 Pump 1 Vibration')?.isAbnormal).toBe(true);
+        expect(byName.get('AT-303 Residual Chlorine at Outlet')?.isAbnormal).toBe(true);
+        expect(byName.get('LT-302 Elevated Tank Level')?.value).toEqual({
+          raw: 'COMM FAIL',
+          numeric: null,
+          comparator: null,
+        });
+      });
+
+      it('reads an equipment test report with acceptance criteria', async () => {
+        const { report } = (await upload('10-transformer-test-report.pdf')).body as UploadResponseDto;
+        const byName = new Map(report.parameters.map((p) => [p.name, p]));
+
+        expect(report).toMatchObject({ reportIdentifier: 'TR/2026/0457', parameterCount: 12 });
+        expect(byName.get('Oil Breakdown Voltage (BDV)')).toMatchObject({
+          referenceRange: { raw: 'Min 50', low: 50, high: null },
+          isAbnormal: false,
+        });
+        expect(byName.get('Polarisation Index (HV-Earth)')?.isAbnormal).toBe(true); // "Fail" in the PDF
+        expect(byName.get('Vector Group')?.value.raw).toBe('Dyn11');
+      });
+
+      it('reads a water quality report and ignores the test-method column', async () => {
+        const { report } = (await upload('11-water-quality-report.pdf')).body as UploadResponseDto;
+        const byName = new Map(report.parameters.map((p) => [p.name, p]));
+
+        expect(report).toMatchObject({ reportIdentifier: 'WTP/LAB/2026/1123', parameterCount: 12 });
+        expect(byName.get('Residual Free Chlorine')?.isAbnormal).toBe(true);
+        expect(byName.get('Iron (as Fe)')?.value).toEqual({ raw: 'BDL', numeric: null, comparator: null });
+        expect(report.parameters.some((p) => p.name.includes('IS 3025'))).toBe(false);
+      });
+
+      it('reads a calibration certificate, taking the unit from the column title', async () => {
+        const { report } = (await upload('12-pressure-calibration-cert.pdf')).body as UploadResponseDto;
+
+        expect(report).toMatchObject({ reportIdentifier: 'CC/2026/1187', parameterCount: 9 });
+        expect(report.parameters[2]).toMatchObject({
+          name: 'Point 3 (50 %, up)',
+          value: { numeric: 5.031 },
+          unit: 'bar',
+          referenceRange: { raw: '± 0.025' },
+        });
+      });
+    });
+
     it('rejects a corrupted PDF with 422', async () => {
       const response = await upload('07-corrupted.pdf');
       expect(response.status).toBe(422);
@@ -174,7 +233,7 @@ describe('Reports API (e2e)', () => {
       const reports = response.body as ReportSummaryDto[];
 
       expect(response.status).toBe(200);
-      expect(reports).toHaveLength(6);
+      expect(reports).toHaveLength(10); // 6 lab + 4 industrial
       expect(reports.find((r) => r.reportIdentifier === 'LR-2026-001077')?.parameterCount).toBe(13);
     });
 

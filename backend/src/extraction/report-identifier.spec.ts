@@ -14,6 +14,12 @@ describe('findReportIdentifier', () => {
     ['Accession #A77812', 'A77812'],
     ['Lab No: 4521.', '4521'],
     ['Patient Name: Asha Rao    Sample ID: SMP-0042', 'SMP-0042'],
+    // Industrial reports
+    ['Report No: SCADA-DR-20261121-PS04', 'SCADA-DR-20261121-PS04'],
+    ['Test Report No: TR/2026/0457    Work Order No: WO-88121', 'TR/2026/0457'],
+    ['Calibration Certificate No: CC/2026/1187', 'CC/2026/1187'],
+    ['Batch No. B-2611-07', 'B-2611-07'],
+    ['Work Order No: WO-88121', 'WO-88121'],
   ])('finds the ID in "%s"', (text, expected) => {
     expect(findReportIdentifier(lines(text))).toBe(expected);
   });
@@ -22,8 +28,9 @@ describe('findReportIdentifier', () => {
     expect(findReportIdentifier(lines('Report ID: R-1', 'Sample ID: S-2'))).toBe('R-1');
   });
 
-  it('does not treat a patient ID as the report ID', () => {
+  it('does not treat a patient ID or an equipment (asset) ID as the report ID', () => {
     expect(findReportIdentifier(lines('Patient ID: P-12345'))).toBeNull();
+    expect(findReportIdentifier(lines('Asset ID: TX-11KV-03'))).toBeNull();
   });
 
   it('ignores labels whose value contains no digit', () => {

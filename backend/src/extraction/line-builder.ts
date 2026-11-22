@@ -12,8 +12,12 @@ import type { Cell, PageText, PositionedText, TextLine } from './extraction.type
 /** Two pieces are on the same line if their centres differ by less than this share of the text height. */
 const SAME_LINE_TOLERANCE = 0.5;
 
-/** A gap wider than this many text heights starts a new cell. A normal word space is ~0.3. */
-const CELL_GAP = 1.0;
+/**
+ * A gap wider than this many text heights starts a new cell. A normal word
+ * space is ~0.25-0.4 (OCR included), while columns in dense industrial tables
+ * can be as close as ~1 text height apart, so 0.8 separates both safely.
+ */
+const CELL_GAP = 0.8;
 
 /** Fallback height for zero-height items, in points. */
 const DEFAULT_HEIGHT = 10;

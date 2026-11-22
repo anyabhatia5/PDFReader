@@ -9,6 +9,7 @@ describe('parseValue', () => {
     ['≤ 7', 7, '<='],
     ['1,50,000', 150000, null],
     ['-2.5', -2.5, null],
+    ['2.5E3', 2500, null],
   ])('reads %s as a number', (raw, numeric, comparator) => {
     expect(parseValue(raw)).toEqual({ raw, numeric, comparator });
   });
@@ -22,14 +23,14 @@ describe('parseValue', () => {
     expect(parseValue('11.2L')).toEqual({ raw: '11.2L', numeric: 11.2, comparator: null });
   });
 
-  it.each(['Positive', 'Nil', 'Negative', 'Reactive', 'Pale Yellow', 'High'])(
+  it.each(['Positive', 'Nil', 'Negative', 'Reactive', 'Pale Yellow', 'High', 'COMM FAIL', 'BDL', 'Dyn11'])(
     'keeps text result %s as text with no number',
     (raw) => {
       expect(parseValue(raw)).toEqual({ raw, numeric: null, comparator: null });
     },
   );
 
-  it.each([null, undefined, '', '  ', '-', '—'])('treats %s as a missing value', (raw) => {
+  it.each([null, undefined, '', '  ', '-', '---', '—'])('treats %s as a missing value', (raw) => {
     expect(parseValue(raw)).toEqual({ raw: null, numeric: null, comparator: null });
   });
 });
@@ -48,6 +49,14 @@ describe('parseReferenceRange', () => {
     ['Up to 40', null, 40],
     ['> 40', 40, null],
     ['>= 60', 60, null],
+    // Industrial wording
+    ['Max 20', null, 20],
+    ['Max. 0.3', null, 0.3],
+    ['NMT 0.5', null, 0.5],
+    ['Min 50', 50, null],
+    ['Minimum 30 kV', 30, null],
+    ['NLT 1000', 1000, null],
+    ['-10 - 50', -10, 50],
   ])('reads %s as low=%s high=%s', (raw, low, high) => {
     expect(parseReferenceRange(raw)).toEqual({ raw, low, high });
   });
