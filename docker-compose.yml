@@ -3,10 +3,13 @@
 # Only the database runs in Docker; the NestJS and Next.js apps run with npm.
 # The credentials below are local development defaults (not secrets) and must
 # match backend/.env.example.
+#
+# No fixed container name: Docker Compose names the container and its data
+# volume after the project folder, so two clones (or another project) never
+# clash, and each clone gets its own database.
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: pdfreader-postgres
     environment:
       POSTGRES_USER: pdfreader
       POSTGRES_PASSWORD: pdfreader
