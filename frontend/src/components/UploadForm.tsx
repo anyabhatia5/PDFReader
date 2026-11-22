@@ -98,11 +98,7 @@ function UploadMessage({ result }: { result: UploadResult }) {
   );
 
   if (duplicate) {
-    return (
-      <p className="text-amber-800">
-        This file was already uploaded, so nothing new was saved. {link}
-      </p>
-    );
+    return <p className="text-amber-800">This file was already uploaded, so nothing new was saved. {link}</p>;
   }
   return (
     <p className="text-emerald-700">

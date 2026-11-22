@@ -104,25 +104,34 @@ const METABOLIC = {
   info: ['Patient Name: Farah Khan        Age/Sex: 61 Y / F', 'Report ID: LR-2026-001077', collected],
   header: ['Test Name', 'Result', 'Unit', 'Reference Range'],
   sections: [
-    ['KIDNEY FUNCTION', [
-      ['Blood Urea', '48', 'mg/dL', '15 - 40'],
-      ['Serum Creatinine', '1.4', 'mg/dL', '0.6 - 1.1'],
-      ['Uric Acid', '6.1', 'mg/dL', '2.6 - 6.0'],
-      ['eGFR', '42', 'mL/min/1.73m²', '> 60'],
-    ]],
-    ['ELECTROLYTES', [
-      ['Sodium', '138', 'mmol/L', '135 - 145'],
-      ['Potassium', '5.4', 'mmol/L', '3.5 - 5.1'],
-      ['Chloride', '101', 'mmol/L', '98 - 107'],
-    ]],
-    ['LIVER FUNCTION', [
-      ['Total Bilirubin', '0.8', 'mg/dL', '0.3 - 1.2'],
-      ['SGOT (AST)', '34', 'U/L', '< 35'],
-      ['SGPT (ALT)', '29', 'U/L', '< 35'],
-      ['Alkaline Phosphatase', '96', 'U/L', '30 - 120'],
-      ['Total Protein', '6.9', 'g/dL', '6.4 - 8.3'],
-      ['Albumin', '3.9', 'g/dL', '3.5 - 5.2'],
-    ]],
+    [
+      'KIDNEY FUNCTION',
+      [
+        ['Blood Urea', '48', 'mg/dL', '15 - 40'],
+        ['Serum Creatinine', '1.4', 'mg/dL', '0.6 - 1.1'],
+        ['Uric Acid', '6.1', 'mg/dL', '2.6 - 6.0'],
+        ['eGFR', '42', 'mL/min/1.73m²', '> 60'],
+      ],
+    ],
+    [
+      'ELECTROLYTES',
+      [
+        ['Sodium', '138', 'mmol/L', '135 - 145'],
+        ['Potassium', '5.4', 'mmol/L', '3.5 - 5.1'],
+        ['Chloride', '101', 'mmol/L', '98 - 107'],
+      ],
+    ],
+    [
+      'LIVER FUNCTION',
+      [
+        ['Total Bilirubin', '0.8', 'mg/dL', '0.3 - 1.2'],
+        ['SGOT (AST)', '34', 'U/L', '< 35'],
+        ['SGPT (ALT)', '29', 'U/L', '< 35'],
+        ['Alkaline Phosphatase', '96', 'U/L', '30 - 120'],
+        ['Total Protein', '6.9', 'g/dL', '6.4 - 8.3'],
+        ['Albumin', '3.9', 'g/dL', '3.5 - 5.2'],
+      ],
+    ],
   ],
   // Leave little room on page 1 so the table must continue on page 2.
   firstPageBottom: 330,
@@ -172,7 +181,10 @@ const INDUSTRIAL_SIGNATURE_X = 260;
 /** SCADA daily summary: Tag + Description, Lo/Hi limit columns, Status column. */
 const SCADA_DAILY = {
   file: '09-scada-daily-process-report.pdf',
-  org: ['SHIROLI WATER SUPPLY SCHEME - SCADA', 'Booster Pumping Station PS-04  |  Fictional system for testing'],
+  org: [
+    'SHIROLI WATER SUPPLY SCHEME - SCADA',
+    'Booster Pumping Station PS-04  |  Fictional system for testing',
+  ],
   info: [
     'Report No: SCADA-DR-20261121-PS04',
     'Station: PS-04 Shiroli Booster        Report Type: Daily Process Summary',
@@ -183,31 +195,43 @@ const SCADA_DAILY = {
   columns: [45, 100, 250, 315, 375, 430, 485],
   fontSize: 9,
   sections: [
-    ['INLET & RAW WATER', [
-      ['FT-101', 'Raw Water Inlet Flow', '182.4', 'm³/h', '120', '250', 'NORMAL'],
-      ['PT-101', 'Inlet Header Pressure', '2.8', 'bar', '1.5', '4.0', 'NORMAL'],
-      ['AT-102', 'Raw Water Turbidity', '14.6', 'NTU', '', '10', 'HI ALARM'],
-      ['AT-103', 'Raw Water pH', '7.6', 'pH', '6.5', '8.5', 'NORMAL'],
-    ]],
-    ['PUMPING', [
-      ['P-201', 'Pump 1 Motor Current', '41.2', 'A', '', '55', 'RUNNING'],
-      ['P-202', 'Pump 2 Motor Current', '0.0', 'A', '', '55', 'STANDBY'],
-      ['TT-203', 'Pump 1 Bearing Temperature', '68.5', '°C', '', '80', 'NORMAL'],
-      ['VT-204', 'Pump 1 Vibration', '7.9', 'mm/s', '', '7.1', 'HI ALARM'],
-      ['PT-205', 'Discharge Header Pressure', '5.6', 'bar', '4.5', '6.5', 'NORMAL'],
-      ['FT-206', 'Outlet Flow', '176.9', 'm³/h', '100', '250', 'NORMAL'],
-    ]],
-    ['STORAGE & OUTLET', [
-      ['LT-301', 'Clear Water Reservoir Level', '3.42', 'm', '1.00', '4.50', 'NORMAL'],
-      ['LT-302', 'Elevated Tank Level', 'COMM FAIL', 'm', '0.50', '6.00', 'COMM FAIL'],
-      ['AT-303', 'Residual Chlorine at Outlet', '0.18', 'mg/L', '0.20', '1.00', 'LO ALARM'],
-    ]],
-    ['POWER & ENERGY', [
-      ['EM-401', 'Total Energy Consumed', '2,184.5', 'kWh', '', '', ''],
-      ['EM-402', 'Average Power Factor', '0.93', '', '0.90', '', 'NORMAL'],
-      ['EM-403', 'Supply Voltage (R-Y)', '418', 'V', '380', '440', 'NORMAL'],
-      ['P-201H', 'Pump 1 Running Hours', '21.6', 'h', '', '', ''],
-    ]],
+    [
+      'INLET & RAW WATER',
+      [
+        ['FT-101', 'Raw Water Inlet Flow', '182.4', 'm³/h', '120', '250', 'NORMAL'],
+        ['PT-101', 'Inlet Header Pressure', '2.8', 'bar', '1.5', '4.0', 'NORMAL'],
+        ['AT-102', 'Raw Water Turbidity', '14.6', 'NTU', '', '10', 'HI ALARM'],
+        ['AT-103', 'Raw Water pH', '7.6', 'pH', '6.5', '8.5', 'NORMAL'],
+      ],
+    ],
+    [
+      'PUMPING',
+      [
+        ['P-201', 'Pump 1 Motor Current', '41.2', 'A', '', '55', 'RUNNING'],
+        ['P-202', 'Pump 2 Motor Current', '0.0', 'A', '', '55', 'STANDBY'],
+        ['TT-203', 'Pump 1 Bearing Temperature', '68.5', '°C', '', '80', 'NORMAL'],
+        ['VT-204', 'Pump 1 Vibration', '7.9', 'mm/s', '', '7.1', 'HI ALARM'],
+        ['PT-205', 'Discharge Header Pressure', '5.6', 'bar', '4.5', '6.5', 'NORMAL'],
+        ['FT-206', 'Outlet Flow', '176.9', 'm³/h', '100', '250', 'NORMAL'],
+      ],
+    ],
+    [
+      'STORAGE & OUTLET',
+      [
+        ['LT-301', 'Clear Water Reservoir Level', '3.42', 'm', '1.00', '4.50', 'NORMAL'],
+        ['LT-302', 'Elevated Tank Level', 'COMM FAIL', 'm', '0.50', '6.00', 'COMM FAIL'],
+        ['AT-303', 'Residual Chlorine at Outlet', '0.18', 'mg/L', '0.20', '1.00', 'LO ALARM'],
+      ],
+    ],
+    [
+      'POWER & ENERGY',
+      [
+        ['EM-401', 'Total Energy Consumed', '2,184.5', 'kWh', '', '', ''],
+        ['EM-402', 'Average Power Factor', '0.93', '', '0.90', '', 'NORMAL'],
+        ['EM-403', 'Supply Voltage (R-Y)', '418', 'V', '380', '440', 'NORMAL'],
+        ['P-201H', 'Pump 1 Running Hours', '21.6', 'h', '', '', ''],
+      ],
+    ],
   ],
   firstPageBottom: 420,
   repeatHeader: true,
@@ -218,7 +242,10 @@ const SCADA_DAILY = {
 /** Equipment test report: S.No, Acceptance Criteria, Pass/Fail result column. */
 const TRANSFORMER_TEST = {
   file: '10-transformer-test-report.pdf',
-  org: ['VOLTLINE TESTING & COMMISSIONING', 'Plot 18, Industrial Area, Kolhapur  |  Fictional company for testing'],
+  org: [
+    'VOLTLINE TESTING & COMMISSIONING',
+    'Plot 18, Industrial Area, Kolhapur  |  Fictional company for testing',
+  ],
   info: [
     'Test Report No: TR/2026/0457        Work Order No: WO-88121',
     'Equipment: 11/0.433 kV, 1000 kVA Distribution Transformer        Asset ID: TX-11KV-03',
@@ -347,7 +374,10 @@ function drawPageTop(doc, report) {
 function drawHeader(doc, report, y) {
   doc.font('Helvetica-Bold').fontSize(report.fontSize);
   report.header.forEach((title, i) => put(doc, title, report.columns[i], y));
-  doc.moveTo(50, y + 14).lineTo(545, y + 14).stroke();
+  doc
+    .moveTo(50, y + 14)
+    .lineTo(545, y + 14)
+    .stroke();
   doc.font('Helvetica');
   return y + 22;
 }
@@ -421,7 +451,11 @@ async function toScannedPdf(pdfBytes, dpi = 200) {
     const viewport = page.getViewport({ scale });
     const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
     await page.render({ canvas, viewport }).promise;
-    images.push({ png: canvas.toBuffer('image/png'), width: viewport.width / scale, height: viewport.height / scale });
+    images.push({
+      png: canvas.toBuffer('image/png'),
+      width: viewport.width / scale,
+      height: viewport.height / scale,
+    });
   }
   await source.loadingTask.destroy();
 

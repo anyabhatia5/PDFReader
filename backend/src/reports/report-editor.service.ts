@@ -3,8 +3,9 @@ import { DataSource, In, type EntityManager } from 'typeorm';
 import { toCanonicalKey } from '../catalog/canonical-key.js';
 import { CatalogService } from '../catalog/catalog.service.js';
 import { parseRowCells } from '../extraction/row-parser.js';
-import { ReportParameter, type OriginalCells } from './entities/report-parameter.entity.js';
+import { ReportParameter, type ParameterCells } from './entities/report-parameter.entity.js';
 import { Report } from './entities/report.entity.js';
+import { toParameterColumns } from './parameter-columns.js';
 import type { AddParameterDto, UpdateParameterDto, UpdateReportDto } from './update-report.dto.js';
 
 /**
@@ -40,8 +41,10 @@ export class ReportEditorService {
       assertValidChanges(rowsByPosition, updates, removals);
 
       // Catalog entries for every new or changed name, resolved in one go.
-      const names = [...updates.flatMap((u) => (u.name === undefined ? [] : [u.name])), ...additions.map((a) => a.name)];
-      const definitionIds = await this.catalog.resolveDefinitionIds(manager, names.map(cleanName));
+      const names = [...updates.map((update) => update.name), ...additions.map((addition) => addition.name)]
+        .filter((name): name is string => name !== undefined)
+        .map(cleanName);
+      const definitionIds = await this.catalog.resolveDefinitionIds(manager, names);
 
       const now = new Date();
       if (removals.size > 0) {
@@ -81,7 +84,8 @@ function assertValidChanges(
   }
   const updated = new Set<number>();
   for (const { position } of updates) {
-    if (removals.has(position)) throw new BadRequestException(`Row ${position} cannot be both edited and removed.`);
+    if (removals.has(position))
+      throw new BadRequestException(`Row ${position} cannot be both edited and removed.`);
     if (updated.has(position)) throw new BadRequestException(`Row ${position} is edited more than once.`);
     updated.add(position);
   }
@@ -102,25 +106,17 @@ function cleanCell(cell: string | null | undefined): string | null {
 }
 
 /** The row's current cells as text. */
-function cellsOf(row: ReportParameter): OriginalCells {
+function cellsOf(row: ReportParameter): ParameterCells {
   return { name: row.nameRaw, value: row.valueRaw, unit: row.unit, range: row.refRangeRaw };
 }
 
 /** Writes the cells (and everything parsed from them) onto a row entity. */
-function assignCells(row: ReportParameter, cells: OriginalCells, definitionIds: Map<string, number>): void {
-  const parsed = parseRowCells(cells);
-  row.nameRaw = cells.name;
+function assignCells(row: ReportParameter, cells: ParameterCells, definitionIds: Map<string, number>): void {
+  Object.assign(row, toParameterColumns(cells.name, parseRowCells(cells)));
   row.parameterDefinitionId = definitionIds.get(toCanonicalKey(cells.name)) ?? row.parameterDefinitionId;
-  row.valueRaw = parsed.value.raw;
-  row.valueNumeric = parsed.value.numeric;
-  row.valueComparator = parsed.value.comparator;
-  row.unit = parsed.unit;
-  row.refRangeRaw = parsed.referenceRange.raw;
-  row.refLow = parsed.referenceRange.low;
-  row.refHigh = parsed.referenceRange.high;
-  row.isAbnormal = parsed.isAbnormal;
 }
 
+/** Applies one row's changes; keeps the extracted version on the first edit. */
 async function applyUpdate(
   manager: EntityManager,
   row: ReportParameter,
@@ -129,7 +125,7 @@ async function applyUpdate(
   now: Date,
 ): Promise<void> {
   const before = cellsOf(row);
-  const after: OriginalCells = {
+  const after: ParameterCells = {
     name: update.name === undefined ? before.name : cleanName(update.name),
     value: update.value === undefined ? before.value : cleanCell(update.value),
     unit: update.unit === undefined ? before.unit : cleanCell(update.unit),

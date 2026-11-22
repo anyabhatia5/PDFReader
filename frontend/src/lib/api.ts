@@ -2,11 +2,12 @@
  * Typed client for the NestJS API.
  *
  * The response types mirror backend/src/reports/reports.dto.ts. Server
- * Components use the `get*` functions; the upload form (a Client Component)
- * uses `uploadReport`. Both run against NEXT_PUBLIC_API_URL.
+ * Components use the `get*` functions; the Client Components use
+ * `uploadReport` (upload form) and `updateReport` (report editor). All of
+ * them call NEXT_PUBLIC_API_URL.
  */
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 export const MAX_UPLOAD_MB = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 20);
 
 export type IdentifierSource = 'pdf' | 'generated' | 'manual';
@@ -25,8 +26,8 @@ export interface ReportSummary {
   createdAt: string;
 }
 
-/** A row's four cells as text, as first extracted. */
-export interface RowCells {
+/** A row's four cells as text: name, result, unit and reference range. */
+export interface ParameterCells {
   name: string;
   value: string | null;
   unit: string | null;
@@ -40,7 +41,7 @@ export interface Parameter {
   pageNumber: number | null;
   source: 'extracted' | 'manual';
   /** Set once a user changed the row; `original` is null for added rows. */
-  edited: { at: string; original: RowCells | null } | null;
+  edited: { at: string; original: ParameterCells | null } | null;
   name: string;
   parameterDefinitionId: number;
   value: { raw: string | null; numeric: number | null; comparator: '<' | '<=' | '>' | '>=' | null };
@@ -120,7 +121,7 @@ export interface ParameterUpdate {
 export interface ReportChanges {
   reportIdentifier?: string;
   updateParameters?: ParameterUpdate[];
-  addParameters?: RowCells[];
+  addParameters?: ParameterCells[];
   removePositions?: number[];
 }
 

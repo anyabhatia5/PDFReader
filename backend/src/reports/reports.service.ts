@@ -10,6 +10,7 @@ import type { ExtractionResult } from '../extraction/extraction.types.js';
 import { ReportParameter } from './entities/report-parameter.entity.js';
 import { Report } from './entities/report.entity.js';
 import { FileStorageService } from './file-storage.service.js';
+import { toParameterColumns } from './parameter-columns.js';
 import { assertIsPdf, decodeFilename } from './pdf-validation.js';
 import type { ReportDetailDto, ReportSummaryDto, UploadResponseDto } from './reports.dto.js';
 import { toDetailDto, toSummaryDto } from './reports.mapper.js';
@@ -150,15 +151,7 @@ export class ReportsService {
           parameterDefinitionId: definitionIds.get(toCanonicalKey(parameter.name)),
           position: parameter.position,
           pageNumber: parameter.pageNumber,
-          nameRaw: parameter.name,
-          valueRaw: parameter.value.raw,
-          valueNumeric: parameter.value.numeric,
-          valueComparator: parameter.value.comparator,
-          unit: parameter.unit,
-          refRangeRaw: parameter.referenceRange.raw,
-          refLow: parameter.referenceRange.low,
-          refHigh: parameter.referenceRange.high,
-          isAbnormal: parameter.isAbnormal,
+          ...toParameterColumns(parameter.name, parameter),
         })),
       );
 

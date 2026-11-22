@@ -1,3 +1,6 @@
+/**
+ * Converts database entities into the API's response shapes (reports.dto.ts).
+ */
 import type { ReportParameter } from './entities/report-parameter.entity.js';
 import type { Report } from './entities/report.entity.js';
 import type { ParameterDto, ReportDetailDto, ReportSummaryDto } from './reports.dto.js';
@@ -18,7 +21,7 @@ export function toSummaryDto(report: Report, parameterCount: number): ReportSumm
 }
 
 /** Entity → parameter row. */
-export function toParameterDto(parameter: ReportParameter): ParameterDto {
+function toParameterDto(parameter: ReportParameter): ParameterDto {
   return {
     position: parameter.position,
     pageNumber: parameter.pageNumber,

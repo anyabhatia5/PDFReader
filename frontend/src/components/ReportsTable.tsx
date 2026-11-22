@@ -40,7 +40,10 @@ export async function ReportsTable() {
           {reports.map((report) => (
             <tr key={report.id} className="hover:bg-zinc-50">
               <td className="whitespace-nowrap px-4 py-3">
-                <Link href={`/reports/${report.id}`} className="font-medium text-zinc-900 underline-offset-2 hover:underline">
+                <Link
+                  href={`/reports/${report.id}`}
+                  className="font-medium text-zinc-900 underline-offset-2 hover:underline"
+                >
                   {report.reportIdentifier}
                 </Link>
                 {report.identifierSource === 'generated' && (
@@ -53,7 +56,11 @@ export async function ReportsTable() {
                 {report.originalFilename}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">
-                {report.status === 'no_parameters_found' ? <Badge tone="danger">None found</Badge> : report.parameterCount}
+                {report.status === 'no_parameters_found' ? (
+                  <Badge tone="danger">None found</Badge>
+                ) : (
+                  report.parameterCount
+                )}
               </td>
               <td className="px-4 py-3">
                 <Badge tone={report.extractionMethod === 'text' ? 'neutral' : 'info'}>

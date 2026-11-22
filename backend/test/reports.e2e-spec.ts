@@ -43,7 +43,9 @@ describe('Reports API (e2e)', () => {
 
   const sample = (file: string) => readFile(path.join(SAMPLES_DIR, file));
   const upload = async (file: string) =>
-    request(app.getHttpServer()).post('/api/reports').attach('file', await sample(file), file);
+    request(app.getHttpServer())
+      .post('/api/reports')
+      .attach('file', await sample(file), file);
 
   beforeAll(async () => {
     // Environment must be set before AppModule is imported (it reads config on import).
@@ -120,10 +122,21 @@ describe('Reports API (e2e)', () => {
       const { report } = (await upload('04-urine-text-values.pdf')).body as UploadResponseDto;
       const byName = new Map(report.parameters.map((p) => [p.name, p]));
 
-      expect(byName.get('Urine Glucose')?.value).toEqual({ raw: 'Positive', numeric: null, comparator: null });
+      expect(byName.get('Urine Glucose')?.value).toEqual({
+        raw: 'Positive',
+        numeric: null,
+        comparator: null,
+      });
       expect(byName.get('Urine Protein')?.value.raw).toBe('Nil');
-      expect(byName.get('C-Reactive Protein (CRP)')?.value).toEqual({ raw: '<5', numeric: 5, comparator: '<' });
-      expect(byName.get('HIV I & II Antibodies')).toMatchObject({ unit: null, referenceRange: { raw: null } });
+      expect(byName.get('C-Reactive Protein (CRP)')?.value).toEqual({
+        raw: '<5',
+        numeric: 5,
+        comparator: '<',
+      });
+      expect(byName.get('HIV I & II Antibodies')).toMatchObject({
+        unit: null,
+        referenceRange: { raw: null },
+      });
       expect(byName.get('Vitamin D (25-OH)')?.value.raw).toBeNull();
       expect(report.warnings).toContain('1 parameter(s) have no result value printed.');
     });
@@ -150,7 +163,11 @@ describe('Reports API (e2e)', () => {
         const { report } = (await upload('09-scada-daily-process-report.pdf')).body as UploadResponseDto;
         const byName = new Map(report.parameters.map((p) => [p.name, p]));
 
-        expect(report).toMatchObject({ reportIdentifier: 'SCADA-DR-20261121-PS04', pageCount: 2, parameterCount: 17 });
+        expect(report).toMatchObject({
+          reportIdentifier: 'SCADA-DR-20261121-PS04',
+          pageCount: 2,
+          parameterCount: 17,
+        });
         expect(byName.get('FT-101 Raw Water Inlet Flow')).toMatchObject({
           value: { numeric: 182.4 },
           unit: 'm³/h',
@@ -241,9 +258,14 @@ describe('Reports API (e2e)', () => {
       const reports = (await request(app.getHttpServer()).get('/api/reports')).body as ReportSummaryDto[];
       const cbcReports = reports.filter((r) => r.reportIdentifier === 'LR-2026-001042');
       const details = await Promise.all(
-        cbcReports.map(async (r) => (await request(app.getHttpServer()).get(`/api/reports/${r.id}`)).body as ReportDetailDto),
+        cbcReports.map(
+          async (r) =>
+            (await request(app.getHttpServer()).get(`/api/reports/${r.id}`)).body as ReportDetailDto,
+        ),
       );
-      const hemoglobinIds = details.map((d) => d.parameters.find((p) => p.name === 'Hemoglobin')?.parameterDefinitionId);
+      const hemoglobinIds = details.map(
+        (d) => d.parameters.find((p) => p.name === 'Hemoglobin')?.parameterDefinitionId,
+      );
 
       expect(hemoglobinIds).toHaveLength(2);
       expect(hemoglobinIds[0]).toBe(hemoglobinIds[1]);
@@ -259,7 +281,9 @@ describe('Reports API (e2e)', () => {
 
     it('returns 404 for an unknown id and 400 for a malformed one', async () => {
       const server = app.getHttpServer();
-      expect((await request(server).get('/api/reports/00000000-0000-4000-8000-000000000000')).status).toBe(404);
+      expect((await request(server).get('/api/reports/00000000-0000-4000-8000-000000000000')).status).toBe(
+        404,
+      );
       expect((await request(server).get('/api/reports/not-a-uuid')).status).toBe(400);
     });
   });
@@ -272,7 +296,8 @@ describe('Reports API (e2e)', () => {
       if (!summary) throw new Error(`${file} was not uploaded`);
       return (await request(app.getHttpServer()).get(`/api/reports/${summary.id}`)).body as ReportDetailDto;
     }
-    const patch = (id: string, body: object) => request(app.getHttpServer()).patch(`/api/reports/${id}`).send(body);
+    const patch = (id: string, body: object) =>
+      request(app.getHttpServer()).patch(`/api/reports/${id}`).send(body);
 
     it('corrects an OCR value, re-parses it and keeps the extracted original', async () => {
       const report = await reportFor('06-scanned-cbc.pdf');
@@ -358,7 +383,10 @@ describe('Reports API (e2e)', () => {
       ['an empty name', { updateParameters: [{ position: 1, name: '' }] }],
       ['a name without letters or digits', { addParameters: [{ name: '***' }] }],
       ['an unknown property', { colour: 'red' }],
-      ['a row both edited and removed', { updateParameters: [{ position: 1, value: '1' }], removePositions: [1] }],
+      [
+        'a row both edited and removed',
+        { updateParameters: [{ position: 1, value: '1' }], removePositions: [1] },
+      ],
       ['a non-integer position', { removePositions: ['one'] }],
     ])('rejects %s with 400', async (_case, body) => {
       const report = await reportFor('10-transformer-test-report.pdf');
@@ -370,5 +398,4 @@ describe('Reports API (e2e)', () => {
       expect(response.status).toBe(404);
     });
   });
-
 });

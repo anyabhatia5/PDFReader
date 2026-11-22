@@ -95,6 +95,7 @@ Other commands (from the repo root):
 npm test            # unit tests
 npm run test:e2e    # end-to-end API tests (needs Postgres running)
 npm run db:down     # stop Postgres (data is kept in a Docker volume)
+npm run format      # format all code with Prettier (CI checks this)
 ```
 
 **Troubleshooting**
@@ -166,48 +167,122 @@ layout (for example, a report with no header row at all) needs a new rule.
 
 ## 4. Database design
 
-A PDF can have any number of parameters, so parameters are **rows, not columns**:
+### The idea in one sentence
 
-```
-reports  1 ──< report_parameters >── 1  parameter_definitions
-(one per PDF)  (one per parameter row)    (catalog: one per kind of test)
-```
+A PDF can have any number of parameters, so **each parameter is stored as its own row**, not as
+its own column. A report with 8 parameters gets 8 rows; one with 17 gets 17 rows. The tables
+never change shape.
 
-| Table | Purpose | Key columns |
+### Example: how two reports are stored
+
+Here are a few of the rows actually stored for sample 01 (a blood count) and sample 04 (a
+urine report). Both reports share the same `report_parameters` table:
+
+| report | # | name (as printed) | value (as printed) | number | unit | range (as printed) | low | high | out of range? |
+|---|---|---|---|---|---|---|---|---|---|
+| LR-2026-001042 | 1 | Hemoglobin | `11.2 L` | 11.2 | g/dL | `12.0 - 15.5` | 12 | 15.5 | yes |
+| LR-2026-001042 | 10 | Platelet Count | `2,45,000` | 245000 | /µL | `1,50,000 - 4,10,000` | 150000 | 410000 | no |
+| UR/2026/4471 | 4 | Urine Glucose | `Positive` | – | – | `Negative` | – | – | unknown |
+| UR/2026/4471 | 6 | C-Reactive Protein (CRP) | `<5` | 5 (with `<`) | mg/L | `< 6` | – | 6 | unknown |
+| UR/2026/4471 | 9 | Vitamin D (25-OH) | – (not printed) | – | ng/mL | `30 - 100` | 30 | 100 | unknown |
+
+This one example shows several decisions at once:
+
+- **Text exactly as printed, plus a parsed number when there is one.** Nothing in the PDF is
+  ever lost (`<5`, `Positive`, `2,45,000`), yet numbers can still be compared and sorted.
+- **Missing cells are simply empty** (Vitamin D has no value; Urine Glucose has no unit).
+- **"Out of range?" is yes, no or unknown.** It is only *yes* or *no* when both the value and
+  the range are numbers. `Positive` vs `Negative`, or `<5` vs `< 6`, are left as *unknown*
+  rather than guessed.
+
+### Why rows, and not something else
+
+This was the main design question, so these are the options I compared:
+
+| Option | How it works | Why not |
 |---|---|---|
-| `reports` | One uploaded PDF | `report_identifier` (indexed), `identifier_source` (`pdf` / `generated`), `file_sha256` (**unique**), `page_count`, `extraction_method`, `status`, `warnings` |
-| `report_parameters` | One row of the result table | `position` (PDF order), `page_number`, `name_raw`, `value_raw` + `value_numeric` + `value_comparator`, `unit`, `ref_range_raw` + `ref_low` + `ref_high`, `is_abnormal`, `source` (`extracted` / `manual`), `original` (JSONB), `edited_at` |
-| `parameter_definitions` | The catalog of distinct tests | `canonical_key` (**unique**), `display_name` |
+| One column per parameter | A `hemoglobin` column, a `platelets` column, … | Every new kind of test needs a schema change, and most columns would be empty |
+| One JSON field per report | All parameters in one JSON document | Easy to write, but hard to search, sort or check ("all hemoglobin values above 15" becomes awkward), and the database can't enforce types |
+| Generic name/value rows (EAV, entity-attribute-value) | Rows of (report, attribute, value) | Loses the structure of a result: value, unit and range belong together |
+| **One row per parameter (chosen)** | A `report_parameters` table with proper columns for value, unit and range | Any number of parameters, and every field stays a real, typed, searchable column |
 
-**Why this design**
+### How the report / sample ID is stored
 
-- **Rows, not columns:** 8, 10 or 50 parameters all fit without changing the schema, and every
-  value is still a proper, queryable column. A JSONB blob would be simpler to write but harder
-  to query and validate. A generic key/value (EAV) table would lose the structure of a result
-  (value, unit, range).
-- **Raw and parsed values side by side:** nothing printed in the PDF is ever lost (`<5`,
-  `Positive`), while numeric values can still be compared and range-checked.
-- **The parameter catalog** links the same test across reports. Printed names are normalised
-  (lowercase, punctuation removed: `Haemoglobin (Hb)` → `haemoglobin hb`), so "all hemoglobin
-  results across reports" is a simple join. Bracket text is kept because it changes meaning:
-  *Glucose (Fasting)* is not *Glucose (PP)*.
-- **The database enforces the rules too:** a unique file hash (no duplicate uploads, even if two
-  arrive at the same moment), CHECK constraints on status and comparator values, foreign keys
-  (deleting a report deletes its rows; a catalog entry in use cannot be deleted), and a unique
-  `(report_id, position)`.
-- **`report_identifier` is not unique** on purpose: two different files can carry the same ID
-  (for example, a scanned copy of a report). Duplicates are decided by file content instead.
-- **Schema changes only through migrations** ([`backend/src/database/migrations`](backend/src/database/migrations)),
-  never `synchronize`, so the schema is versioned and reproducible.
-- Each report and all its parameters are saved in **one transaction**: a failure never leaves a
-  half-saved report. The original PDF is kept on disk, named by its hash.
-- **Corrections keep the evidence.** Edited rows hold their current values in the normal
-  columns (so every query and the UI just work), and the first time an extracted row is edited,
-  its extracted cells are copied into `original` (JSONB). Rows added by a user have
-  `source = 'manual'` and no page number. A corrected report ID gets
-  `identifier_source = 'manual'`. A full edit-history table was considered, but one
-  "as extracted" snapshot per row answers the key question ("what did the PDF reader get
-  wrong?") with much less complexity.
+The ID printed on the report (for example `LR-2026-001042`) is stored in
+`reports.report_identifier`, with an index so lookups by ID are fast. It is deliberately **not**
+the table's primary key and **not** unique. The printed ID can be missing (a generated
+`AUTO-…` ID is stored instead), repeated (a scanned copy of the same paper report is a different
+file with the same ID), or corrected by a user later. So each report also gets an internal
+random ID (a UUID) as its primary key, and **duplicates are detected by file content** (a
+SHA-256 fingerprint of the file, which *is* unique) rather than by the printed ID.
+
+### The three tables
+
+```
+reports  ──(1 to many)──>  report_parameters  ──(many to 1)──>  parameter_definitions
+one per uploaded PDF       one per parameter row                one per kind of test
+```
+
+**`reports`**: one uploaded PDF.
+
+| Group | Columns |
+|---|---|
+| Identity | `id` (UUID, primary key), `report_identifier` (indexed), `identifier_source` (`pdf` / `generated` / `manual`) |
+| The file | `original_filename`, `file_sha256` (**unique**, used to detect duplicates), `file_path`, `page_count` |
+| Extraction outcome | `extraction_method` (`text` / `ocr` / `mixed`), `status` (`completed` / `no_parameters_found`), `warnings`, `created_at` |
+
+**`report_parameters`**: one row of a report's result table.
+
+| Group | Columns |
+|---|---|
+| Where it belongs | `report_id` (→ `reports`), `parameter_definition_id` (→ catalog), `position` (order in the PDF), `page_number` |
+| As printed | `name_raw`, `value_raw`, `unit`, `ref_range_raw` |
+| Parsed | `value_numeric`, `value_comparator` (`<`, `<=`, `>`, `>=`), `ref_low`, `ref_high`, `is_abnormal` |
+| Corrections | `source` (`extracted` / `manual`), `original`, `edited_at` (see below) |
+
+**`parameter_definitions`**: the catalog of distinct tests (`canonical_key`, which is unique,
+and `display_name`). It links the same test across reports. Printed names are simplified to a
+matching key (lowercase, punctuation removed: `Haemoglobin (Hb)` → `haemoglobin hb`). Text in
+brackets is kept because it changes the meaning: *Glucose (Fasting)* is not *Glucose (PP)*.
+That makes questions across reports a simple query, for example every hemoglobin result:
+
+```sql
+SELECT r.report_identifier, p.value_raw, p.unit, p.is_abnormal
+FROM report_parameters p
+JOIN parameter_definitions d ON d.id = p.parameter_definition_id
+JOIN reports r ON r.id = p.report_id
+WHERE d.canonical_key = 'hemoglobin';
+```
+
+### Rules the database itself enforces
+
+Even if the application had a bug, the database refuses bad data:
+
+- **No duplicate files:** `file_sha256` is unique. If two identical uploads arrive at the same
+  moment, the database lets only one in, and the API returns that one to both.
+- **No duplicate rows:** each `(report_id, position)` pair is unique.
+- **Only known values:** check constraints (rules stored in the database) allow only the listed
+  values for `identifier_source`, `extraction_method`, `status`, `value_comparator` and `source`.
+- **Links stay valid:** deleting a report deletes its rows; a catalog entry that is still used
+  cannot be deleted.
+- **All or nothing:** a report and all its rows are saved in one transaction, so a failure never
+  leaves half a report. Manual corrections work the same way.
+- **Versioned schema:** tables are created and changed only through migration files in
+  [`backend/src/database/migrations`](backend/src/database/migrations), never generated
+  automatically at startup, so every machine gets exactly the same schema.
+
+### Manual corrections keep the evidence
+
+When a user corrects a wrongly read value, the corrected text goes into the normal columns, so
+every query and the UI just work. The first time an extracted row is edited, its original cells
+(name, value, unit, range) are saved in `original` as a small JSON object, together with
+`edited_at`. Rows a user adds have `source = 'manual'` and no page number; a corrected report ID
+gets `identifier_source = 'manual'`. I considered a full edit-history table, but one "as
+extracted" copy per row answers the important question ("what did the PDF reader get
+wrong?") with much less complexity.
+
+The original PDF itself is kept on disk, named by its SHA-256 fingerprint, so the source of any
+value can always be checked.
 
 ## 5. Edge cases
 

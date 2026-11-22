@@ -59,6 +59,9 @@ jobs:
           npm --prefix frontend ci
           npm run migrate
 
+      - name: Formatting (Prettier)
+        run: npm run format:check
+
       - name: Backend lint
         run: npm --prefix backend run lint
 

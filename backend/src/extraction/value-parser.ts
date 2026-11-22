@@ -1,8 +1,9 @@
 /**
  * Turns printed result values and reference ranges into structured data.
  *
- * Lab reports mix numbers ("13.2"), bounded numbers ("<5", "≥ 40"),
- * thousands separators ("1,50,000") and text ("Positive", "Nil"). The raw
+ * Reports mix numbers ("13.2"), bounded numbers ("<5", "≥ 40"), thousands
+ * separators ("1,50,000") and text ("Positive", "Nil", "COMM FAIL"), and
+ * write ranges many ways ("13 - 17", "< 200", "Max 20", "Min 50"). The raw
  * text is always kept; a number is only extracted when it is unambiguous.
  */
 import type { ValueComparator } from '../reports/entities/report-parameter.entity.js';

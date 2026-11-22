@@ -3,16 +3,8 @@
  * from the database entities, so internals (file hash, disk path) are never
  * exposed and the database can change without breaking the API.
  */
-import type {
-  ExtractionMethod,
-  IdentifierSource,
-  ReportStatus,
-} from './entities/report.entity.js';
-import type {
-  OriginalCells,
-  ParameterSource,
-  ValueComparator,
-} from './entities/report-parameter.entity.js';
+import type { ExtractionMethod, IdentifierSource, ReportStatus } from './entities/report.entity.js';
+import type { ParameterCells, ParameterSource, ValueComparator } from './entities/report-parameter.entity.js';
 
 /** A row in the reports list. */
 export interface ReportSummaryDto {
@@ -36,7 +28,7 @@ export interface ParameterDto {
   /** 'extracted' from the PDF, or 'manual' (added by a user). */
   source: ParameterSource;
   /** Set when a user changed the row; `original` is the extracted version (null for added rows). */
-  edited: { at: string; original: OriginalCells | null } | null;
+  edited: { at: string; original: ParameterCells | null } | null;
   name: string;
   parameterDefinitionId: number;
   value: { raw: string | null; numeric: number | null; comparator: ValueComparator | null };

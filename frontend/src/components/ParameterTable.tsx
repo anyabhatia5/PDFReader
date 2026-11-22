@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import type { Parameter, RowCells } from '@/lib/api';
+import type { Parameter, ParameterCells } from '@/lib/api';
 import { abnormalDirection } from '@/lib/format';
 import { Badge } from './Badge';
 
@@ -7,7 +7,7 @@ import { Badge } from './Badge';
 const EMPTY = <span className="text-zinc-400">—</span>;
 
 /** Hover text showing what was extracted before a user corrected the row. */
-function originalText(original: RowCells): string {
+function originalText(original: ParameterCells): string {
   const cells = [original.name, original.value, original.unit, original.range].map((cell) => cell ?? '—');
   return `Extracted from the PDF: ${cells.join(' | ')}`;
 }
@@ -74,7 +74,9 @@ export function ParameterTable({ parameters, pageCount }: { parameters: Paramete
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-zinc-600">{parameter.unit ?? EMPTY}</td>
-                  <td className="px-4 py-2.5 tabular-nums text-zinc-600">{parameter.referenceRange.raw ?? EMPTY}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-zinc-600">
+                    {parameter.referenceRange.raw ?? EMPTY}
+                  </td>
                 </tr>
               </Fragment>
             );
