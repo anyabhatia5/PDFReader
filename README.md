@@ -45,6 +45,11 @@ and calibration certificates.
   *High* / *Low*, multi-page tables show where each page starts, and warnings explain anything
   to double-check (e.g. "Page 1 is scanned; read with OCR (90% confidence)"). The original
   PDF can be opened next to it.
+- **Manual corrections:** if a value was read wrongly (typically by OCR), *Edit values* turns the
+  table into inputs. Users can correct any cell, add rows the extraction missed, remove wrong
+  rows and fix the report ID, then save everything in one go. Corrected values are re-parsed
+  and re-checked against their ranges. The **originally extracted text is kept** and shown on
+  hover over an *Edited* badge, so OCR mistakes stay auditable.
 - **A NestJS API** that does the extraction and stores everything in PostgreSQL.
 - **Sample PDFs** in [`samples/`](samples) (all fictional), plus the script that generates them:
 
@@ -171,7 +176,7 @@ reports  1 ──< report_parameters >── 1  parameter_definitions
 | Table | Purpose | Key columns |
 |---|---|---|
 | `reports` | One uploaded PDF | `report_identifier` (indexed), `identifier_source` (`pdf` / `generated`), `file_sha256` (**unique**), `page_count`, `extraction_method`, `status`, `warnings` |
-| `report_parameters` | One row of the result table | `position` (PDF order), `page_number`, `name_raw`, `value_raw` + `value_numeric` + `value_comparator`, `unit`, `ref_range_raw` + `ref_low` + `ref_high`, `is_abnormal` |
+| `report_parameters` | One row of the result table | `position` (PDF order), `page_number`, `name_raw`, `value_raw` + `value_numeric` + `value_comparator`, `unit`, `ref_range_raw` + `ref_low` + `ref_high`, `is_abnormal`, `source` (`extracted` / `manual`), `original` (JSONB), `edited_at` |
 | `parameter_definitions` | The catalog of distinct tests | `canonical_key` (**unique**), `display_name` |
 
 **Why this design**
@@ -196,6 +201,13 @@ reports  1 ──< report_parameters >── 1  parameter_definitions
   never `synchronize`, so the schema is versioned and reproducible.
 - Each report and all its parameters are saved in **one transaction**: a failure never leaves a
   half-saved report. The original PDF is kept on disk, named by its hash.
+- **Corrections keep the evidence.** Edited rows hold their current values in the normal
+  columns (so every query and the UI just work), and the first time an extracted row is edited,
+  its extracted cells are copied into `original` (JSONB). Rows added by a user have
+  `source = 'manual'` and no page number. A corrected report ID gets
+  `identifier_source = 'manual'`. A full edit-history table was considered, but one
+  "as extracted" snapshot per row answers the key question ("what did the PDF reader get
+  wrong?") with much less complexity.
 
 ## 5. Edge cases
 
@@ -217,6 +229,8 @@ reports  1 ──< report_parameters >── 1  parameter_definitions
 | File too large / empty / missing | **413** (over 20 MB) / **400** / **400** | – |
 | PDF with no recognisable table | Stored with status `no_parameters_found` and a warning | – |
 | Two identical uploads at once | The database's unique constraint lets one in; the other gets that report back | – |
+| A value was read wrongly (e.g. OCR) or a row was missed | *Edit values*: correct cells, add / remove rows, fix the ID; re-parsed on save; extracted original kept | 06 |
+| An invalid correction (unknown row, empty name...) | **400** with a clear message; the whole change set is rejected, nothing is half-applied | – |
 | API not running | The UI shows "Cannot reach the API… Is the backend running?" | – |
 
 ## 6. API
@@ -228,6 +242,7 @@ All routes are under `http://localhost:4000/api`.
 | `POST` | `/reports` (multipart field `file`) | **201** new report · **200** `{ duplicate: true }` · 400 / 413 / 415 / 422 / 503 |
 | `GET` | `/reports` | All reports, newest first, with parameter counts |
 | `GET` | `/reports/:id` | Report with its parameters in PDF order · 400 malformed id · 404 |
+| `PATCH` | `/reports/:id` | Corrections in one transaction: `{ reportIdentifier?, updateParameters?: [{ position, name?, value?, unit?, range? }], addParameters?: [{ name, value?, unit?, range? }], removePositions?: [n] }` · returns the updated report · 400 / 404 |
 | `GET` | `/reports/:id/file` | The original PDF |
 | `GET` | `/health` | `{ status: "ok", database: "up" }` |
 
@@ -254,8 +269,9 @@ PDFReader/
 - **99 unit tests** (Vitest) for every parsing step: values, ranges, line building, table
   detection (lab and industrial layouts, page continuation, missing cells, limit columns),
   ID detection, catalog keys and upload validation.
-- **18 end-to-end tests** run the real API against a real PostgreSQL database with the real
-  sample PDFs (lab and industrial), including OCR. They use a separate `pdfreader_test` database, so local data is
+- **30 end-to-end tests** run the real API against a real PostgreSQL database with the real
+  sample PDFs (lab and industrial), including OCR and manual corrections (re-parsing, keeping
+  the extracted original, add / remove rows, all-or-nothing saves, validation). They use a separate `pdfreader_test` database, so local data is
   never touched.
 - **CI** ([GitHub Actions](.github/workflows/ci.yml)) runs lint, all tests and the frontend
   build on **Ubuntu and macOS**. Ubuntu uses the exact `npm run setup` from this README.
@@ -291,14 +307,18 @@ every run.
   are needed.
 - Uploads are processed **synchronously** (a scanned page takes a few seconds), which is fine
   for single uploads. A job queue would be the next step for bulk uploads.
-- No authentication: this is a local tool for the assignment.
+- No authentication: this is a local tool for the assignment. So edits are not attributed to a
+  user, and two people editing the same report at once means the last save wins.
+- Removing a row in edit mode is a real delete once saved (it can be undone until *Save*).
+- "Extraction notes" (warnings) describe the automatic extraction and stay unchanged after
+  manual edits.
 
 ## 10. Known limitations
 
 - **OCR is not perfect.** On scans, small characters can be misread. For example, in sample 06
   the RBC range `4.0 - 5.2` is read as `40-52` (decimal points lost), so that row is wrongly
-  marked *Low*. Every OCR'd page therefore shows a warning with its confidence score, asking
-  the user to verify, and the original PDF is one click away.
+  marked *Low*. Every OCR'd page therefore shows a warning with its confidence score, the
+  original PDF is one click away, and the user can **correct the value with *Edit values***.
 - The parser relies on a recognisable header row; a report without one is stored with status
   `no_parameters_found` rather than guessed. New report formats with unusual column titles
   need their words added to the header patterns in

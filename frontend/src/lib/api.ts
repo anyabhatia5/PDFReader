@@ -9,7 +9,7 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 export const MAX_UPLOAD_MB = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 20);
 
-export type IdentifierSource = 'pdf' | 'generated';
+export type IdentifierSource = 'pdf' | 'generated' | 'manual';
 export type ExtractionMethod = 'text' | 'ocr' | 'mixed';
 export type ReportStatus = 'completed' | 'no_parameters_found';
 
@@ -25,9 +25,22 @@ export interface ReportSummary {
   createdAt: string;
 }
 
+/** A row's four cells as text, as first extracted. */
+export interface RowCells {
+  name: string;
+  value: string | null;
+  unit: string | null;
+  range: string | null;
+}
+
 export interface Parameter {
+  /** Stable key of the row within its report. */
   position: number;
-  pageNumber: number;
+  /** null for rows added by a user. */
+  pageNumber: number | null;
+  source: 'extracted' | 'manual';
+  /** Set once a user changed the row; `original` is null for added rows. */
+  edited: { at: string; original: RowCells | null } | null;
   name: string;
   parameterDefinitionId: number;
   value: { raw: string | null; numeric: number | null; comparator: '<' | '<=' | '>' | '>=' | null };
@@ -92,6 +105,32 @@ export function uploadReport(file: File): Promise<UploadResult> {
   const form = new FormData();
   form.append('file', file);
   return request('/reports', { method: 'POST', body: form });
+}
+
+/** Changes to one existing row. Omitted cell = unchanged, null = cleared. */
+export interface ParameterUpdate {
+  position: number;
+  name?: string;
+  value?: string | null;
+  unit?: string | null;
+  range?: string | null;
+}
+
+/** Body of PATCH /reports/:id. */
+export interface ReportChanges {
+  reportIdentifier?: string;
+  updateParameters?: ParameterUpdate[];
+  addParameters?: RowCells[];
+  removePositions?: number[];
+}
+
+/** Saves a user's corrections; returns the updated report. */
+export function updateReport(id: string, changes: ReportChanges): Promise<ReportDetail> {
+  return request(`/reports/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
 }
 
 /** URL of the original PDF, opened directly by the browser. */

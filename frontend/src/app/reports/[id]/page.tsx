@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import { Badge } from '@/components/Badge';
 import { ErrorNotice } from '@/components/ErrorNotice';
-import { ParameterTable } from '@/components/ParameterTable';
+import { ReportEditor } from '@/components/ReportEditor';
 import { getReport, originalFileUrl, type ReportDetail as ReportDetailData } from '@/lib/api';
 import { formatDate, METHOD_LABELS } from '@/lib/format';
 
@@ -40,6 +40,7 @@ async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{report.reportIdentifier}</h1>
           {report.identifierSource === 'generated' && <Badge tone="warning">Generated ID</Badge>}
+          {report.identifierSource === 'manual' && <Badge tone="info">ID entered manually</Badge>}
           <Badge tone={report.extractionMethod === 'text' ? 'neutral' : 'info'}>
             {METHOD_LABELS[report.extractionMethod]}
           </Badge>
@@ -75,20 +76,18 @@ async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
       </header>
 
       {report.warnings.length > 0 && (
-        <ul className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          {report.warnings.map((warning) => (
-            <li key={warning}>⚠ {warning}</li>
-          ))}
-        </ul>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {/* Notes describe the automatic extraction, so they stay as-is after manual edits. */}
+          <p className="mb-1 font-medium">Extraction notes</p>
+          <ul className="space-y-1">
+            {report.warnings.map((warning) => (
+              <li key={warning}>⚠ {warning}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
-      {report.parameters.length > 0 ? (
-        <ParameterTable parameters={report.parameters} pageCount={report.pageCount} />
-      ) : (
-        <p className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500">
-          No parameters could be extracted from this PDF. Open the original to check its contents.
-        </p>
-      )}
+      <ReportEditor report={report} />
     </article>
   );
 }

@@ -1,16 +1,32 @@
 import { Fragment } from 'react';
-import type { Parameter } from '@/lib/api';
+import type { Parameter, RowCells } from '@/lib/api';
 import { abnormalDirection } from '@/lib/format';
+import { Badge } from './Badge';
 
 /** Shown for any column the PDF left empty. */
 const EMPTY = <span className="text-zinc-400">—</span>;
 
+/** Hover text showing what was extracted before a user corrected the row. */
+function originalText(original: RowCells): string {
+  const cells = [original.name, original.value, original.unit, original.range].map((cell) => cell ?? '—');
+  return `Extracted from the PDF: ${cells.join(' | ')}`;
+}
+
+/** Divider label above a group of rows: the PDF page, or rows a user added. */
+function groupLabel(parameter: Parameter): string {
+  return parameter.pageNumber === null ? 'Added manually' : `Page ${parameter.pageNumber}`;
+}
+
 /**
- * The extracted parameters in the same column layout as the report:
+ * The parameters in the same column layout as the report:
  * Parameter | Result | Unit | Reference Range / Limits. Out-of-range results are
- * highlighted; a divider marks where the PDF continued on a new page.
+ * highlighted; dividers mark where the PDF continued on a new page; rows a
+ * user corrected or added are badged.
  */
 export function ParameterTable({ parameters, pageCount }: { parameters: Parameter[]; pageCount: number }) {
+  const hasManualRows = parameters.some((p) => p.pageNumber === null);
+  const showDividers = pageCount > 1 || hasManualRows;
+
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
       <table className="min-w-full text-sm">
@@ -25,20 +41,28 @@ export function ParameterTable({ parameters, pageCount }: { parameters: Paramete
         </thead>
         <tbody className="divide-y divide-zinc-100">
           {parameters.map((parameter, index) => {
-            const startsNewPage = pageCount > 1 && parameter.pageNumber !== parameters[index - 1]?.pageNumber;
+            const startsGroup = showDividers && parameter.pageNumber !== parameters[index - 1]?.pageNumber;
             const direction = abnormalDirection(parameter);
             return (
               <Fragment key={parameter.position}>
-                {startsNewPage && (
+                {startsGroup && (
                   <tr className="bg-zinc-50/60">
                     <td colSpan={5} className="px-4 py-1.5 text-xs font-medium text-zinc-500">
-                      Page {parameter.pageNumber}
+                      {groupLabel(parameter)}
                     </td>
                   </tr>
                 )}
                 <tr className={direction ? 'bg-red-50/50' : undefined}>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-zinc-400">{parameter.position}</td>
-                  <td className="px-4 py-2.5 font-medium text-zinc-900">{parameter.name}</td>
+                  {/* Display order, not the stored position (removed rows leave gaps). */}
+                  <td className="px-4 py-2.5 text-right tabular-nums text-zinc-400">{index + 1}</td>
+                  <td className="px-4 py-2.5 font-medium text-zinc-900">
+                    {parameter.name}
+                    {parameter.edited?.original && (
+                      <span className="ml-2 cursor-help" title={originalText(parameter.edited.original)}>
+                        <Badge tone="info">Edited</Badge>
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 tabular-nums">
                     {parameter.value.raw === null ? (
                       <span className="text-zinc-400 italic">not reported</span>
