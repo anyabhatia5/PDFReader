@@ -43,15 +43,15 @@ const CBC = {
   header: ['Test', 'Result', 'Unit', 'Reference Range'],
   rows: [
     ['Hemoglobin', '11.2 L', 'g/dL', '12.0 - 15.5'],
-    ['Total RBC Count', '4.3', 'million/ÂµL', '4.0 - 5.2'],
+    ['Total RBC Count', '4.3', 'million/µL', '4.0 - 5.2'],
     ['Packed Cell Volume (PCV)', '36.1', '%', '36 - 46'],
     ['Mean Corpuscular Volume (MCV)', '84', 'fL', '80 - 100'],
     ['MCH', '26.0 L', 'pg', '27 - 33'],
     ['MCHC', '31.0 L', 'g/dL', '32 - 36'],
-    ['Total WBC Count', '11,800 H', 'cells/ÂµL', '4,000 - 11,000'],
+    ['Total WBC Count', '11,800 H', 'cells/µL', '4,000 - 11,000'],
     ['Neutrophils', '72', '%', '40 - 75'],
     ['Lymphocytes', '21', '%', '20 - 45'],
-    ['Platelet Count', '2,45,000', '/ÂµL', '1,50,000 - 4,10,000'],
+    ['Platelet Count', '2,45,000', '/µL', '1,50,000 - 4,10,000'],
   ],
 };
 
@@ -68,8 +68,8 @@ const LIPID_THYROID = {
     ['LDL Cholesterol', '158', 'mg/dL', 'Up to 100'],
     ['VLDL Cholesterol', '36', 'mg/dL', '5 - 40'],
     ['T3 (Total)', '1.1', 'ng/mL', '0.8 - 2.0'],
-    ['T4 (Total)', '7.9', 'Âµg/dL', '5.1 - 14.1'],
-    ['TSH', '5.8', 'ÂµIU/mL', '0.27 - 4.20'],
+    ['T4 (Total)', '7.9', 'µg/dL', '5.1 - 14.1'],
+    ['TSH', '5.8', 'µIU/mL', '0.27 - 4.20'],
   ],
 };
 
@@ -85,7 +85,7 @@ const METABOLIC = {
       ['Blood Urea', '48', 'mg/dL', '15 - 40'],
       ['Serum Creatinine', '1.4', 'mg/dL', '0.6 - 1.1'],
       ['Uric Acid', '6.1', 'mg/dL', '2.6 - 6.0'],
-      ['eGFR', '42', 'mL/min/1.73mÂ²', '> 60'],
+      ['eGFR', '42', 'mL/min/1.73m²', '> 60'],
     ]],
     ['ELECTROLYTES', [
       ['Sodium', '138', 'mmol/L', '135 - 145'],
@@ -135,7 +135,7 @@ const NO_ID = {
     ['Glucose (Post Prandial)', '182', 'mg/dL', '70 - 140'],
     ['HbA1c', '6.9', '%', '4.0 - 5.6'],
     ['Mean Blood Glucose', '151', 'mg/dL', ''],
-    ['Fasting Insulin', '14.2', 'ÂµIU/mL', '2.6 - 24.9'],
+    ['Fasting Insulin', '14.2', 'µIU/mL', '2.6 - 24.9'],
     ['HOMA-IR', '4.4', '', '< 2.5'],
   ],
 };
