@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/anyabhatia5/PDFReader/actions/workflows/ci.yml/badge.svg)](https://github.com/anyabhatia5/PDFReader/actions/workflows/ci.yml)
 
-**Demo video:** _add link here_ (3–5 min: uploading PDFs and viewing the extracted data)
+**Demo video:** https://www.loom.com/share/c42d576230594f408c2a436e84240ae5
 
 Upload a report PDF, and PDFReader reads it (with OCR if it is a scan), extracts every
 parameter row (name, result, unit, reference range / limits), stores it in PostgreSQL against
