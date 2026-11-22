@@ -74,7 +74,9 @@ export function ParameterTable({ parameters, pageCount }: { parameters: Paramete
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-zinc-600">{parameter.unit ?? EMPTY}</td>
-                  <td className="px-4 py-2.5 tabular-nums text-zinc-600">{parameter.referenceRange.raw ?? EMPTY}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-zinc-600">
+                    {parameter.referenceRange.raw ?? EMPTY}
+                  </td>
                 </tr>
               </Fragment>
             );

@@ -23,8 +23,12 @@ export function ReportEditor({ report }: { report: ReportDetail }) {
   }
 
   function updateRow(key: string, changes: Partial<DraftRow>) {
-    setDraft((current) =>
-      current && { ...current, rows: current.rows.map((row) => (row.key === key ? { ...row, ...changes } : row)) },
+    setDraft(
+      (current) =>
+        current && {
+          ...current,
+          rows: current.rows.map((row) => (row.key === key ? { ...row, ...changes } : row)),
+        },
     );
   }
 
@@ -92,8 +96,8 @@ export function ReportEditor({ report }: { report: ReportDetail }) {
           />
         </label>
         <p className="max-w-md text-xs text-zinc-600">
-          Correct any cell, add rows the extraction missed, or remove wrong ones. Values are re-checked against
-          their ranges when you save, and the originally extracted text is kept.
+          Correct any cell, add rows the extraction missed, or remove wrong ones. Values are re-checked
+          against their ranges when you save, and the originally extracted text is kept.
         </p>
       </div>
 

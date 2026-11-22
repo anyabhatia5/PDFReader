@@ -3,16 +3,8 @@
  * from the database entities, so internals (file hash, disk path) are never
  * exposed and the database can change without breaking the API.
  */
-import type {
-  ExtractionMethod,
-  IdentifierSource,
-  ReportStatus,
-} from './entities/report.entity.js';
-import type {
-  ParameterCells,
-  ParameterSource,
-  ValueComparator,
-} from './entities/report-parameter.entity.js';
+import type { ExtractionMethod, IdentifierSource, ReportStatus } from './entities/report.entity.js';
+import type { ParameterCells, ParameterSource, ValueComparator } from './entities/report-parameter.entity.js';
 
 /** A row in the reports list. */
 export interface ReportSummaryDto {

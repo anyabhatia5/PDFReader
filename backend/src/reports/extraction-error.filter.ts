@@ -1,10 +1,4 @@
-import {
-  Catch,
-  HttpStatus,
-  Logger,
-  type ArgumentsHost,
-  type ExceptionFilter,
-} from '@nestjs/common';
+import { Catch, HttpStatus, Logger, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import type { Response } from 'express';
 import { OcrUnavailableError, UnreadablePdfError } from '../extraction/extraction.errors.js';
 
@@ -20,9 +14,7 @@ export class ExtractionErrorFilter implements ExceptionFilter {
 
   catch(error: UnreadablePdfError | OcrUnavailableError, host: ArgumentsHost): void {
     const status =
-      error instanceof UnreadablePdfError
-        ? HttpStatus.UNPROCESSABLE_ENTITY
-        : HttpStatus.SERVICE_UNAVAILABLE;
+      error instanceof UnreadablePdfError ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.SERVICE_UNAVAILABLE;
 
     this.logger.warn(`${error.message} (cause: ${String((error.cause as Error)?.message ?? 'n/a')})`);
     host

@@ -84,7 +84,8 @@ function assertValidChanges(
   }
   const updated = new Set<number>();
   for (const { position } of updates) {
-    if (removals.has(position)) throw new BadRequestException(`Row ${position} cannot be both edited and removed.`);
+    if (removals.has(position))
+      throw new BadRequestException(`Row ${position} cannot be both edited and removed.`);
     if (updated.has(position)) throw new BadRequestException(`Row ${position} is edited more than once.`);
     updated.add(position);
   }

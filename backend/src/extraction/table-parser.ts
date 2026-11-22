@@ -55,7 +55,10 @@ const HEADER_PATTERNS: Array<[ColumnKey, RegExp]> = [
   ],
   ['unit', /^(units?|uom|eng\.?\s*units?|e\.?u\.?)\b/i],
   ['value', /\b(result|results|observed|value|values|observation|reading|measured|actual|pv)\b/i],
-  ['name', /\b(test|tests|parameter|parameters|investigation|analyte|description|tag|point|item|signal|characteristic)\b/i],
+  [
+    'name',
+    /\b(test|tests|parameter|parameters|investigation|analyte|description|tag|point|item|signal|characteristic)\b/i,
+  ],
 ];
 
 /** Lines that mark the end of the result table. */

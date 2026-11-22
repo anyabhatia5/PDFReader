@@ -46,9 +46,7 @@ function splitIntoCells(pieces: PositionedText[]): Cell[] {
  * (left to right).
  */
 export function buildLines(page: PageText): TextLine[] {
-  const pieces = page.items
-    .filter((item) => item.text.trim() !== '')
-    .sort((a, b) => a.y - b.y || a.x - b.x);
+  const pieces = page.items.filter((item) => item.text.trim() !== '').sort((a, b) => a.y - b.y || a.x - b.x);
 
   // Pass 1: group pieces into lines by vertical position.
   const groups: PositionedText[][] = [];
