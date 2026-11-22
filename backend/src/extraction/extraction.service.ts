@@ -12,8 +12,8 @@ import { buildLines } from './line-builder.js';
 import { OcrService } from './ocr.service.js';
 import { openPdf, readTextLayer, renderPageToPng } from './pdf-reader.js';
 import { findReportIdentifier } from './report-identifier.js';
+import { parseRowCells } from './row-parser.js';
 import { parseParameterTable } from './table-parser.js';
-import { isOutOfRange, parseReferenceRange, parseValue } from './value-parser.js';
 
 /** A page with fewer readable characters than this is treated as scanned. */
 const MIN_TEXT_CHARS = 20;
@@ -89,16 +89,11 @@ function countChars(items: PositionedText[]): number {
 
 /** Parses a raw table row into its stored form. */
 function toExtractedParameter(row: RawTableRow, index: number): ExtractedParameter {
-  const value = parseValue(row.value);
-  const referenceRange = parseReferenceRange(row.range);
   return {
     position: index + 1,
     pageNumber: row.pageNumber,
     name: row.name,
-    value,
-    unit: row.unit?.trim() || null,
-    referenceRange,
-    isAbnormal: isOutOfRange(value, referenceRange),
+    ...parseRowCells(row),
   };
 }
 

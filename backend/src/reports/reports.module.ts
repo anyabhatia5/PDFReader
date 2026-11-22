@@ -7,6 +7,7 @@ import { ExtractionModule } from '../extraction/extraction.module.js';
 import { ReportParameter } from './entities/report-parameter.entity.js';
 import { Report } from './entities/report.entity.js';
 import { FileStorageService } from './file-storage.service.js';
+import { ReportEditorService } from './report-editor.service.js';
 import { ReportsController } from './reports.controller.js';
 import { ReportsService } from './reports.service.js';
 
@@ -25,6 +26,6 @@ import { ReportsService } from './reports.service.js';
     CatalogModule,
   ],
   controllers: [ReportsController],
-  providers: [ReportsService, FileStorageService],
+  providers: [ReportsService, ReportEditorService, FileStorageService],
 })
 export class ReportsModule {}

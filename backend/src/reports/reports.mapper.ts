@@ -22,6 +22,10 @@ export function toParameterDto(parameter: ReportParameter): ParameterDto {
   return {
     position: parameter.position,
     pageNumber: parameter.pageNumber,
+    source: parameter.source,
+    edited: parameter.editedAt
+      ? { at: parameter.editedAt.toISOString(), original: parameter.original }
+      : null,
     name: parameter.nameRaw,
     parameterDefinitionId: parameter.parameterDefinitionId,
     value: {

@@ -16,6 +16,7 @@
  *     lines) are skipped; an end marker ("End of report", "Tested by")
  *     closes the table.
  */
+import { toCanonicalKey } from '../catalog/canonical-key.js';
 import type { Cell, RawTableRow, TextLine } from './extraction.types.js';
 
 /**
@@ -129,7 +130,10 @@ function toRow(line: TextLine, columns: Column[]): RawTableRow | null {
   }
 
   const name = values.name?.trim();
-  if (!name || LABEL_LIKE.test(name) || PAGE_FOOTER.test(name)) return null;
+  // The name must give a catalog key ("—" or "***" is decoration, not a name).
+  if (!name || !toCanonicalKey(name) || LABEL_LIKE.test(name) || PAGE_FOOTER.test(name)) {
+    return null;
+  }
 
   const row: RawTableRow = {
     pageNumber: line.pageNumber,

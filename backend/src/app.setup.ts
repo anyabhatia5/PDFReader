@@ -1,4 +1,4 @@
-import type { INestApplication } from '@nestjs/common';
+import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 /**
@@ -9,4 +9,8 @@ export function configureApp(app: INestApplication): void {
   const config = app.get(ConfigService);
   app.setGlobalPrefix('api');
   app.enableCors({ origin: config.getOrThrow<string>('frontendOrigin') });
+
+  // Validates request bodies against their DTO classes (class-validator):
+  // unknown properties are rejected, and bodies become DTO instances.
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
 }

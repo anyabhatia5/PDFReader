@@ -263,4 +263,112 @@ describe('Reports API (e2e)', () => {
       expect((await request(server).get('/api/reports/not-a-uuid')).status).toBe(400);
     });
   });
+
+  describe('PATCH /api/reports/:id (manual corrections)', () => {
+    /** Id and current detail of the report uploaded from `file`. */
+    async function reportFor(file: string): Promise<ReportDetailDto> {
+      const reports = (await request(app.getHttpServer()).get('/api/reports')).body as ReportSummaryDto[];
+      const summary = reports.find((r) => r.originalFilename === file);
+      if (!summary) throw new Error(`${file} was not uploaded`);
+      return (await request(app.getHttpServer()).get(`/api/reports/${summary.id}`)).body as ReportDetailDto;
+    }
+    const patch = (id: string, body: object) => request(app.getHttpServer()).patch(`/api/reports/${id}`).send(body);
+
+    it('corrects an OCR value, re-parses it and keeps the extracted original', async () => {
+      const report = await reportFor('06-scanned-cbc.pdf');
+      const rbc = report.parameters.find((p) => p.name === 'Total RBC Count')!;
+
+      const response = await patch(report.id, {
+        updateParameters: [{ position: rbc.position, range: '4.0 - 5.2' }],
+      });
+      const updated = (response.body as ReportDetailDto).parameters.find((p) => p.position === rbc.position)!;
+
+      expect(response.status).toBe(200);
+      expect(updated.referenceRange).toEqual({ raw: '4.0 - 5.2', low: 4, high: 5.2 });
+      expect(updated.isAbnormal).toBe(false);
+      expect(updated.edited?.original).toEqual({
+        name: rbc.name,
+        value: rbc.value.raw,
+        unit: rbc.unit,
+        range: rbc.referenceRange.raw,
+      });
+    });
+
+    it('keeps the FIRST extracted version across several edits', async () => {
+      const report = await reportFor('01-cbc-10-parameters.pdf');
+      await patch(report.id, { updateParameters: [{ position: 1, value: '11.5' }] });
+      const response = await patch(report.id, { updateParameters: [{ position: 1, value: '12.4' }] });
+      const row = (response.body as ReportDetailDto).parameters[0];
+
+      expect(row.value).toEqual({ raw: '12.4', numeric: 12.4, comparator: null });
+      expect(row.isAbnormal).toBe(false);
+      expect(row.edited?.original?.value).toBe('11.2 L');
+    });
+
+    it('adds a missed row and removes a junk row', async () => {
+      const report = await reportFor('02-lipid-thyroid-8-parameters.pdf');
+      const response = await patch(report.id, {
+        addParameters: [{ name: 'Free T4', value: '1.9', unit: 'ng/dL', range: '0.9 - 1.7' }],
+        removePositions: [5],
+      });
+      const updated = response.body as ReportDetailDto;
+      const added = updated.parameters.at(-1)!;
+
+      expect(updated.parameterCount).toBe(8); // 8 - 1 + 1
+      expect(updated.parameters.some((p) => p.position === 5)).toBe(false);
+      expect(added).toMatchObject({
+        position: 9, // positions are never reused
+        pageNumber: null,
+        source: 'manual',
+        name: 'Free T4',
+        value: { numeric: 1.9 },
+        isAbnormal: true,
+        edited: { original: null },
+      });
+    });
+
+    it('replaces a generated ID with one typed by the user', async () => {
+      const report = await reportFor('05-no-report-id.pdf');
+      const response = await patch(report.id, { reportIdentifier: '  BS-2026-0042 ' });
+
+      expect(response.body).toMatchObject({ reportIdentifier: 'BS-2026-0042', identifierSource: 'manual' });
+    });
+
+    it('applies all changes or none: an invalid row leaves the report untouched', async () => {
+      const before = await reportFor('11-water-quality-report.pdf');
+      const response = await patch(before.id, {
+        updateParameters: [{ position: 1, value: '9.9' }],
+        removePositions: [999],
+      });
+      const after = await reportFor('11-water-quality-report.pdf');
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Row 999 does not exist.');
+      expect(after.parameters).toEqual(before.parameters);
+    });
+
+    it('updates the status when all rows are removed', async () => {
+      const report = await reportFor('12-pressure-calibration-cert.pdf');
+      const response = await patch(report.id, { removePositions: report.parameters.map((p) => p.position) });
+
+      expect(response.body).toMatchObject({ status: 'no_parameters_found', parameterCount: 0 });
+    });
+
+    it.each([
+      ['an empty name', { updateParameters: [{ position: 1, name: '' }] }],
+      ['a name without letters or digits', { addParameters: [{ name: '***' }] }],
+      ['an unknown property', { colour: 'red' }],
+      ['a row both edited and removed', { updateParameters: [{ position: 1, value: '1' }], removePositions: [1] }],
+      ['a non-integer position', { removePositions: ['one'] }],
+    ])('rejects %s with 400', async (_case, body) => {
+      const report = await reportFor('10-transformer-test-report.pdf');
+      expect((await patch(report.id, body)).status).toBe(400);
+    });
+
+    it('returns 404 for an unknown report', async () => {
+      const response = await patch('00000000-0000-4000-8000-000000000000', { reportIdentifier: 'X-1' });
+      expect(response.status).toBe(404);
+    });
+  });
+
 });

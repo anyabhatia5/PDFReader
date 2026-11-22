@@ -2,6 +2,7 @@ import type { DataSourceOptions } from 'typeorm';
 import { ParameterDefinition } from '../catalog/parameter-definition.entity.js';
 import type { DatabaseConfig } from '../config/app-config.js';
 import { InitialSchema1795331643353 } from './migrations/1795331643353-InitialSchema.js';
+import { AddManualEdits1795338368484 } from './migrations/1795338368484-AddManualEdits.js';
 import { ReportParameter } from '../reports/entities/report-parameter.entity.js';
 import { Report } from '../reports/entities/report.entity.js';
 
@@ -10,7 +11,7 @@ import { Report } from '../reports/entities/report.entity.js';
  * same options work from TypeScript sources, compiled output and tests.
  */
 const ENTITIES: DataSourceOptions['entities'] = [Report, ReportParameter, ParameterDefinition];
-const MIGRATIONS: DataSourceOptions['migrations'] = [InitialSchema1795331643353];
+const MIGRATIONS: DataSourceOptions['migrations'] = [InitialSchema1795331643353, AddManualEdits1795338368484];
 
 /**
  * TypeORM options shared by the running app and the migration CLI.

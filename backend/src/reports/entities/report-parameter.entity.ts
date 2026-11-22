@@ -16,6 +16,17 @@ import { Report } from './report.entity.js';
 /** Comparator printed in front of a value, e.g. the "<" in "<5". */
 export type ValueComparator = '<' | '<=' | '>' | '>=';
 
+/** Whether a row was read from the PDF or added by a user. */
+export type ParameterSource = 'extracted' | 'manual';
+
+/** The four cells of a row as text, as first extracted (kept when a user edits the row). */
+export interface OriginalCells {
+  name: string;
+  value: string | null;
+  unit: string | null;
+  range: string | null;
+}
+
 /**
  * One row of a report's result table, e.g. "Hemoglobin | 13.2 | g/dL | 13 - 17".
  *
@@ -27,6 +38,7 @@ export type ValueComparator = '<' | '<=' | '>' | '>=';
 @Entity('report_parameters')
 @Unique('UQ_report_parameters_report_position', ['reportId', 'position'])
 @Check('CHK_report_parameters_comparator', `"value_comparator" IN ('<', '<=', '>', '>=')`)
+@Check('CHK_report_parameters_source', `"source" IN ('extracted', 'manual')`)
 export class ReportParameter {
   @PrimaryGeneratedColumn({ primaryKeyConstraintName: 'PK_report_parameters' })
   id: number;
@@ -56,8 +68,9 @@ export class ReportParameter {
   @Column({ type: 'integer' })
   position: number;
 
-  @Column({ name: 'page_number', type: 'integer' })
-  pageNumber: number;
+  /** Page the row was printed on; null for rows added by a user. */
+  @Column({ name: 'page_number', type: 'integer', nullable: true })
+  pageNumber: number | null;
 
   /** Parameter name exactly as printed in the PDF. */
   @Column({ name: 'name_raw', type: 'text' })
@@ -95,4 +108,19 @@ export class ReportParameter {
   /** True/false when value and range are both numeric; null when unknown. */
   @Column({ name: 'is_abnormal', type: 'boolean', nullable: true })
   isAbnormal: boolean | null;
+
+  @Column({ type: 'varchar', length: 16, default: 'extracted' })
+  source: ParameterSource;
+
+  /**
+   * The row as first extracted, saved the first time a user edits it, so
+   * what the parser / OCR produced stays auditable and can be restored.
+   * Null for rows never edited and for rows added by a user.
+   */
+  @Column({ type: 'jsonb', nullable: true })
+  original: OriginalCells | null;
+
+  /** When a user last changed (or added) this row. */
+  @Column({ name: 'edited_at', type: 'timestamptz', nullable: true })
+  editedAt: Date | null;
 }

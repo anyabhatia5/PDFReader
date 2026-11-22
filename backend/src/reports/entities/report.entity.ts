@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 import { ReportParameter } from './report-parameter.entity.js';
 
-/** Where the report identifier came from. */
-export type IdentifierSource = 'pdf' | 'generated';
+/** Where the report identifier came from: the PDF, generated, or typed in by a user. */
+export type IdentifierSource = 'pdf' | 'generated' | 'manual';
 
 /** How the text was obtained: PDF text layer, OCR, or both (per page). */
 export type ExtractionMethod = 'text' | 'ocr' | 'mixed';
@@ -26,7 +26,7 @@ export type ReportStatus = 'completed' | 'no_parameters_found';
  */
 @Entity('reports')
 @Unique('UQ_reports_file_sha256', ['fileSha256'])
-@Check('CHK_reports_identifier_source', `"identifier_source" IN ('pdf', 'generated')`)
+@Check('CHK_reports_identifier_source', `"identifier_source" IN ('pdf', 'generated', 'manual')`)
 @Check('CHK_reports_extraction_method', `"extraction_method" IN ('text', 'ocr', 'mixed')`)
 @Check('CHK_reports_status', `"status" IN ('completed', 'no_parameters_found')`)
 export class Report {
