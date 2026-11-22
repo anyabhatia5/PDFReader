@@ -176,7 +176,7 @@ reports  1 ──< report_parameters >── 1  parameter_definitions
 
 | Table | Purpose | Key columns |
 |---|---|---|
-| `reports` | One uploaded PDF | `report_identifier` (indexed), `identifier_source` (`pdf` / `generated`), `file_sha256` (**unique**), `page_count`, `extraction_method`, `status`, `warnings` |
+| `reports` | One uploaded PDF | `report_identifier` (indexed), `identifier_source` (`pdf` / `generated` / `manual`), `file_sha256` (**unique**), `page_count`, `extraction_method`, `status`, `warnings` |
 | `report_parameters` | One row of the result table | `position` (PDF order), `page_number`, `name_raw`, `value_raw` + `value_numeric` + `value_comparator`, `unit`, `ref_range_raw` + `ref_low` + `ref_high`, `is_abnormal`, `source` (`extracted` / `manual`), `original` (JSONB), `edited_at` |
 | `parameter_definitions` | The catalog of distinct tests | `canonical_key` (**unique**), `display_name` |
 
