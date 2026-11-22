@@ -95,6 +95,7 @@ Other commands (from the repo root):
 npm test            # unit tests
 npm run test:e2e    # end-to-end API tests (needs Postgres running)
 npm run db:down     # stop Postgres (data is kept in a Docker volume)
+npm run format      # format all code with Prettier (CI checks this)
 ```
 
 **Troubleshooting**
