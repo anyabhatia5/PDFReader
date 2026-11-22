@@ -6,8 +6,8 @@ import { abnormalDirection } from '@/lib/format';
 const EMPTY = <span className="text-zinc-400">—</span>;
 
 /**
- * The extracted parameters in the same column layout as a lab report:
- * Parameter | Result | Unit | Reference Range. Out-of-range results are
+ * The extracted parameters in the same column layout as the report:
+ * Parameter | Result | Unit | Reference Range / Limits. Out-of-range results are
  * highlighted; a divider marks where the PDF continued on a new page.
  */
 export function ParameterTable({ parameters, pageCount }: { parameters: Parameter[]; pageCount: number }) {
@@ -20,7 +20,7 @@ export function ParameterTable({ parameters, pageCount }: { parameters: Paramete
             <th className="px-4 py-3">Parameter</th>
             <th className="px-4 py-3">Result</th>
             <th className="px-4 py-3">Unit</th>
-            <th className="px-4 py-3">Reference Range</th>
+            <th className="px-4 py-3">Reference Range / Limits</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">

@@ -55,9 +55,10 @@ export function UploadForm() {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-zinc-900">Upload a lab report</h2>
+      <h2 className="text-base font-semibold text-zinc-900">Upload a report</h2>
       <p className="mt-1 text-sm text-zinc-600">
-        PDF up to {MAX_UPLOAD_MB} MB. Scanned reports are read with OCR, which takes a few seconds.
+        Lab, test, process or calibration reports as PDF, up to {MAX_UPLOAD_MB} MB. Scanned reports are read
+        with OCR, which takes a few seconds.
       </p>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">

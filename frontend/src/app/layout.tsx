@@ -7,8 +7,8 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PDFReader · Lab report extraction',
-  description: 'Upload lab-report PDFs, extract their parameters and view them as a table.',
+  title: 'PDFReader · Report data extraction',
+  description: 'Upload lab or industrial report PDFs, extract their parameters and view them as a table.',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             <Link href="/" className="text-lg font-semibold tracking-tight">
               PDFReader
             </Link>
-            <span className="text-sm text-zinc-500">Lab report data extraction</span>
+            <span className="text-sm text-zinc-500">Report data extraction</span>
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
