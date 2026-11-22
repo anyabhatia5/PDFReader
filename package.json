@@ -1,0 +1,22 @@
+{
+  "name": "pdfreader",
+  "version": "0.1.0",
+  "description": "Upload lab-report PDFs, extract their parameters into PostgreSQL and view them in a table.",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "db:up": "docker compose --env-file backend/.env up -d --wait",
+    "db:down": "docker compose --env-file backend/.env down",
+    "migrate": "npm --prefix backend run migration:run",
+    "dev": "concurrently --names api,web --prefix-colors blue,magenta \"npm --prefix backend run start:dev\" \"npm --prefix frontend run dev\"",
+    "test": "npm --prefix backend test",
+    "test:e2e": "npm --prefix backend run test:e2e"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

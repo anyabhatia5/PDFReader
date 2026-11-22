@@ -1,0 +1,27 @@
+# Local PostgreSQL for development.
+#
+# Only the database runs in Docker; the NestJS and Next.js apps run with npm.
+# The credentials below are local development defaults (not secrets) and must
+# match backend/.env.example.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pdfreader-postgres
+    environment:
+      POSTGRES_USER: pdfreader
+      POSTGRES_PASSWORD: pdfreader
+      POSTGRES_DB: pdfreader
+    ports:
+      # Host port 5433 avoids clashing with a Postgres the reviewer may
+      # already run on the default 5432. Override with DB_PORT if needed.
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pdfreader -d pdfreader"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:
