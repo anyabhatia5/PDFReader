@@ -3,7 +3,7 @@ import type { TextLine } from './extraction.types.js';
 
 /** Builds lines from plain strings; positions don't matter here. */
 function lines(...texts: string[]): TextLine[] {
-  return texts.map((text, i) => ({ pageNumber: 1, y: i * 20, cells: [], text }));
+  return texts.map((text) => ({ pageNumber: 1, cells: [], text }));
 }
 
 describe('findReportIdentifier', () => {

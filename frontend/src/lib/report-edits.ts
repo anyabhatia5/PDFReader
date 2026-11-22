@@ -1,9 +1,10 @@
 /**
  * Edit-mode data for the report page, and the conversion from "what the user
  * sees in the edited table" to the minimal set of changes the API needs.
- * Pure functions only, so the logic is easy to follow and test.
+ * Plain functions with no React or network code, so the logic is easy to
+ * follow and test.
  */
-import type { ParameterUpdate, ReportChanges, ReportDetail, RowCells } from './api';
+import type { ParameterCells, ParameterUpdate, ReportChanges, ReportDetail } from './api';
 
 /** One row in the edit table. Cells are plain strings ("" = empty). */
 export interface DraftRow {
@@ -40,11 +41,9 @@ export function toDraft(report: ReportDetail): Draft {
   };
 }
 
-let newRowCounter = 0;
-
+/** A blank row for the user to fill in; its random key keeps React rows stable. */
 export function emptyRow(): DraftRow {
-  newRowCounter += 1;
-  return { key: `new-${newRowCounter}`, name: '', value: '', unit: '', range: '', removed: false };
+  return { key: `new-${crypto.randomUUID()}`, name: '', value: '', unit: '', range: '', removed: false };
 }
 
 /** "" → null, so an emptied cell is sent as "clear this cell". */
@@ -52,7 +51,8 @@ function toCell(text: string): string | null {
   return text.trim() || null;
 }
 
-const CELL_FIELDS = ['value', 'unit', 'range'] as const;
+/** The cells besides the name, which may be left empty. */
+const OPTIONAL_CELLS = ['value', 'unit', 'range'] as const;
 
 /** Result of comparing the draft with the stored report. */
 export type DraftCheck =
@@ -69,11 +69,11 @@ export function buildChanges(report: ReportDetail, draft: Draft): DraftCheck {
 
   const stored = new Map(report.parameters.map((p) => [p.position, p]));
   const updates: ParameterUpdate[] = [];
-  const additions: RowCells[] = [];
+  const additions: ParameterCells[] = [];
   const removals: number[] = [];
 
   for (const row of draft.rows) {
-    const isBlank = !row.name.trim() && CELL_FIELDS.every((field) => !row[field].trim());
+    const isBlank = !row.name.trim() && OPTIONAL_CELLS.every((field) => !row[field].trim());
 
     if (row.position === undefined) {
       // New row: skip if left completely empty, otherwise it needs a name.
@@ -96,7 +96,7 @@ export function buildChanges(report: ReportDetail, draft: Draft): DraftCheck {
 
     // Existing row: send only the cells that differ from what is stored.
     const current = stored.get(row.position)!;
-    const before: RowCells = {
+    const before: ParameterCells = {
       name: current.name,
       value: current.value.raw,
       unit: current.unit,
@@ -104,7 +104,7 @@ export function buildChanges(report: ReportDetail, draft: Draft): DraftCheck {
     };
     const update: ParameterUpdate = { position: row.position };
     if (row.name.trim() !== before.name) update.name = row.name.trim();
-    for (const field of CELL_FIELDS) {
+    for (const field of OPTIONAL_CELLS) {
       if (toCell(row[field]) !== before[field]) update[field] = toCell(row[field]);
     }
     if (Object.keys(update).length > 1) updates.push(update);

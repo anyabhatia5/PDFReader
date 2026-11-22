@@ -24,8 +24,8 @@ import { UpdateReportDto } from './update-report.dto.js';
 /**
  * HTTP endpoints under /api/reports.
  *
- *   POST /reports           upload a PDF (multipart field "file")
- *   GET  /reports           list all reports
+ *   POST  /reports           upload a PDF (multipart field "file")
+ *   GET   /reports           list all reports
  *   GET   /reports/:id       one report with its parameters
  *   PATCH /reports/:id       correct the report ID and rows
  *   GET   /reports/:id/file  the original PDF

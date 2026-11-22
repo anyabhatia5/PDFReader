@@ -9,7 +9,7 @@ import type {
   ReportStatus,
 } from './entities/report.entity.js';
 import type {
-  OriginalCells,
+  ParameterCells,
   ParameterSource,
   ValueComparator,
 } from './entities/report-parameter.entity.js';
@@ -36,7 +36,7 @@ export interface ParameterDto {
   /** 'extracted' from the PDF, or 'manual' (added by a user). */
   source: ParameterSource;
   /** Set when a user changed the row; `original` is the extracted version (null for added rows). */
-  edited: { at: string; original: OriginalCells | null } | null;
+  edited: { at: string; original: ParameterCells | null } | null;
   name: string;
   parameterDefinitionId: number;
   value: { raw: string | null; numeric: number | null; comparator: ValueComparator | null };

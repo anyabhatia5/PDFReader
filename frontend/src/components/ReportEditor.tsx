@@ -157,7 +157,8 @@ export function ReportEditor({ report }: { report: ReportDetail }) {
   );
 }
 
-const CELL_FIELDS = [
+/** The editable columns: draft field and the input's accessible label. */
+const INPUT_COLUMNS = [
   ['name', 'Parameter'],
   ['value', 'Result'],
   ['unit', 'Unit'],
@@ -177,7 +178,7 @@ function EditableRow({
   const isNew = row.position === undefined;
   return (
     <tr className={row.removed ? 'bg-zinc-50 opacity-50' : undefined}>
-      {CELL_FIELDS.map(([field, label]) => (
+      {INPUT_COLUMNS.map(([field, label]) => (
         <td key={field} className="px-3 py-1.5">
           <input
             aria-label={label}

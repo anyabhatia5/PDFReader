@@ -19,8 +19,8 @@ export type ValueComparator = '<' | '<=' | '>' | '>=';
 /** Whether a row was read from the PDF or added by a user. */
 export type ParameterSource = 'extracted' | 'manual';
 
-/** The four cells of a row as text, as first extracted (kept when a user edits the row). */
-export interface OriginalCells {
+/** A row's four cells as text: name, result, unit and reference range. */
+export interface ParameterCells {
   name: string;
   value: string | null;
   unit: string | null;
@@ -118,7 +118,7 @@ export class ReportParameter {
    * Null for rows never edited and for rows added by a user.
    */
   @Column({ type: 'jsonb', nullable: true })
-  original: OriginalCells | null;
+  original: ParameterCells | null;
 
   /** When a user last changed (or added) this row. */
   @Column({ name: 'edited_at', type: 'timestamptz', nullable: true })

@@ -41,7 +41,6 @@ export interface Cell {
 /** One visual line of a page, split into cells by large horizontal gaps. */
 export interface TextLine {
   pageNumber: number;
-  y: number;
   cells: Cell[];
   /** All cells joined by spaces; handy for label searches. */
   text: string;
@@ -61,26 +60,34 @@ export interface ReferenceRange {
   high: number | null;
 }
 
-/** A table row, as text, before values are parsed. */
-export interface RawTableRow {
-  pageNumber: number;
-  name: string;
+/** A row's result, unit and range cells as text (null = empty). */
+export interface RowCells {
   value: string | null;
   unit: string | null;
   range: string | null;
 }
 
-/** One fully parsed parameter, ready to be stored. */
-export interface ExtractedParameter {
-  /** 1-based order in the report. */
-  position: number;
-  pageNumber: number;
-  name: string;
+/** A row's cells after parsing (see row-parser.ts). */
+export interface ParsedRowCells {
   value: ParsedValue;
   unit: string | null;
   referenceRange: ReferenceRange;
   /** null when it cannot be decided (non-numeric value or range). */
   isAbnormal: boolean | null;
+}
+
+/** A table row, as text, before values are parsed. */
+export interface RawTableRow extends RowCells {
+  pageNumber: number;
+  name: string;
+}
+
+/** One fully parsed parameter, ready to be stored. */
+export interface ExtractedParameter extends ParsedRowCells {
+  /** 1-based order in the report. */
+  position: number;
+  pageNumber: number;
+  name: string;
 }
 
 /** Everything extracted from one PDF. */

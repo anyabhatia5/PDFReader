@@ -84,7 +84,7 @@ function classifyTitle(title: string, taken: Set<ColumnKey>): ColumnKey {
 }
 
 /** Recognises a header line; returns its columns, or null if it isn't one. */
-export function detectHeader(line: TextLine): Column[] | null {
+function detectHeader(line: TextLine): Column[] | null {
   const taken = new Set<ColumnKey>();
   const columns = line.cells.map((cell): Column => {
     const key = classifyTitle(cell.text, taken);

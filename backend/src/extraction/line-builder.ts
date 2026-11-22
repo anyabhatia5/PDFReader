@@ -71,7 +71,6 @@ export function buildLines(page: PageText): TextLine[] {
     const cells = splitIntoCells([...group].sort((a, b) => a.x - b.x));
     return {
       pageNumber: page.pageNumber,
-      y: group[0].y,
       cells,
       text: cells.map((cell) => cell.text).join(' '),
     };
