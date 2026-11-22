@@ -1,0 +1,75 @@
+# Proves the project installs, builds and passes its tests on Linux and macOS
+# (the project is developed on Windows), exactly as a reviewer would run it.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    env:
+      # Docker Compose (Linux) maps Postgres to 5433; Homebrew (macOS) uses 5432.
+      # Real environment variables take precedence over backend/.env.
+      DB_PORT: ${{ matrix.os == 'macos-latest' && '5432' || '5433' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # Linux: the documented one-command setup (env files, installs,
+      # Postgres in Docker Compose, migrations).
+      - name: npm run setup
+        if: runner.os == 'Linux'
+        run: npm run setup
+
+      # macOS runners have no Docker, so install Postgres with Homebrew and
+      # run the remaining setup steps by hand.
+      - name: Start PostgreSQL (Homebrew)
+        if: runner.os == 'macOS'
+        run: |
+          brew install postgresql@16
+          PG_BIN="$(brew --prefix postgresql@16)/bin"
+          brew services start postgresql@16
+          for i in $(seq 1 30); do "$PG_BIN/pg_isready" -h localhost -p 5432 && break; sleep 1; done
+          "$PG_BIN/psql" -h localhost -p 5432 -d postgres -c "CREATE ROLE pdfreader LOGIN CREATEDB PASSWORD 'pdfreader';"
+          "$PG_BIN/psql" -h localhost -p 5432 -d postgres -c "CREATE DATABASE pdfreader OWNER pdfreader;"
+
+      - name: Install and migrate (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cp backend/.env.example backend/.env
+          cp frontend/.env.example frontend/.env
+          npm ci
+          npm --prefix backend ci
+          npm --prefix frontend ci
+          npm run migrate
+
+      - name: Backend lint
+        run: npm --prefix backend run lint
+
+      - name: Backend unit tests
+        run: npm --prefix backend test
+
+      - name: Backend end-to-end tests (real Postgres, real sample PDFs, OCR)
+        run: npm --prefix backend run test:e2e
+
+      - name: Frontend lint
+        run: npm --prefix frontend run lint
+
+      - name: Frontend production build
+        run: npm --prefix frontend run build
